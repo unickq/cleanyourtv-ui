@@ -80,6 +80,11 @@ public class ServicesActivity extends Activity {
                     Prefs.setHideRentals(!Prefs.hideRentals());
                     build(providers);
                 }));
+        list.addView(row("hidePurchases", null, Strings.get(R.string.hide_purchases),
+                Prefs.hidePurchases() ? Strings.get(R.string.on) : Strings.get(R.string.off), v -> {
+                    Prefs.setHidePurchases(!Prefs.hidePurchases());
+                    build(providers);
+                }));
         list.addView(kinoWatchRow());
         if (providers == null) {
             TextView loading = TvUi.text(this, k, 26, Ui.regular, TvUi.DIM);

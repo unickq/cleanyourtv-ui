@@ -104,6 +104,7 @@
     <string name="heavy_rain">"Forte pluie"</string>
     <string name="hidden">"Masqué"</string>
     <string name="hide">"Masquer « "</string>
+    <string name="hide_purchases">"Masquer les offres d’achat"</string>
     <string name="hide_2">"Masquer"</string>
     <string name="hide_from_the_menu">"Masquer du menu"</string>
     <string name="high_prefix">". Maximum "</string>

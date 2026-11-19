@@ -146,6 +146,7 @@
     <string name="youtube_prime_video_and_google_play_the_tv_itself_controls_those_buttons">"YouTube, Prime Video und Google Play: Diese Tasten steuert der Fernseher selbst."</string>
 
     <string name="count_from_tmdb">%1$s · Daten von TMDB</string>
+    <string name="hide_purchases">"Kaufangebote ausblenden"</string>
     <plurals name="titles">
         <item quantity="one">%1$d Titel</item>
         <item quantity="other">%1$d Titel</item>

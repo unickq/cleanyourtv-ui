@@ -149,6 +149,7 @@
     <string name="hide">"Скрыть «"</string>
     <string name="hide_2">"Скрыть"</string>
     <string name="hide_from_the_menu">"Скрыть из меню"</string>
+    <string name="hide_purchases">"Скрывать покупку"</string>
     <string name="hide_rentals">"Скрывать прокат"</string>
     <string name="hide_services_without_installed_apps">"Скрывать сервисы без установленных приложений"</string>
     <string name="high_prefix">". Максимум "</string>

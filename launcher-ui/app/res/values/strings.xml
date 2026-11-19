@@ -173,6 +173,7 @@
     <string name="hide_2">"Hide"</string>
     <string name="hide_from_menu">"Hide from menu"</string>
     <string name="hide_from_the_menu">"Hide from the menu"</string>
+    <string name="hide_purchases">"Hide purchases"</string>
     <string name="hide_rentals">"Hide rentals"</string>
     <string name="hide_services_without_installed_apps">"Hide services without installed apps"</string>
     <string name="high_prefix">". High "</string>

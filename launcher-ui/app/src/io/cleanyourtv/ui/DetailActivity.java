@@ -423,6 +423,7 @@ public class DetailActivity extends Activity {
     private JSONObject watchRegion;
     private boolean hideServicesWithoutApps;
     private boolean hideRentals;
+    private boolean hidePurchases;
     private View iptvChip;
     private String iptvShown = "";
 
@@ -443,6 +444,7 @@ public class DetailActivity extends Activity {
     private void refreshProviderChips() {
         hideServicesWithoutApps = Prefs.hideServicesWithoutApps();
         hideRentals = Prefs.hideRentals();
+        hidePurchases = Prefs.hidePurchases();
         int firstProvider = iptvChip == null ? 0 : 1;
         whereLine.removeViews(firstProvider, whereLine.getChildCount() - firstProvider);
         chipNotes.clear();
@@ -456,11 +458,11 @@ public class DetailActivity extends Activity {
         String[][] types = {{"flatrate", Strings.get(R.string.subscription)}, {"free", Strings.get(R.string.free)},
                 {"ads", Strings.get(R.string.free_with_ads)}, {"rent", Strings.get(R.string.rent)}, {"buy", Strings.get(R.string.buy)}};
         Set<String> added = new HashSet<>();
-        boolean rentalsHidden = false;
+        boolean offersHidden = false;
         for (String[] type : types) {
             JSONArray list = watchRegion == null ? null : watchRegion.optJSONArray(type[0]);
-            if (hideRentals && "rent".equals(type[0])) {
-                rentalsHidden = list != null && list.length() > 0;
+            if ((hideRentals && "rent".equals(type[0])) || (hidePurchases && "buy".equals(type[0]))) {
+                offersHidden |= list != null && list.length() > 0;
                 continue;
             }
             for (int i = 0; list != null && i < list.length(); i++) {
@@ -473,7 +475,7 @@ public class DetailActivity extends Activity {
                 }
             }
         }
-        if (rentalsHidden) {
+        if (offersHidden) {
             whereEmpty.setText(Strings.get(R.string.no_viewing_options_match_your_filters));
         } else if (hideServicesWithoutApps) {
             whereEmpty.setText(Strings.get(R.string.no_official_streaming_apps_installed));
@@ -782,7 +784,8 @@ public class DetailActivity extends Activity {
         super.onStart();
         if (stopped) TvUi.restoreImages(getWindow().getDecorView());
         if (stopped && whereLine != null) {
-            if (hideServicesWithoutApps != Prefs.hideServicesWithoutApps() || hideRentals != Prefs.hideRentals()) {
+            if (hideServicesWithoutApps != Prefs.hideServicesWithoutApps() || hideRentals != Prefs.hideRentals()
+                    || hidePurchases != Prefs.hidePurchases()) {
                 refreshProviderChips();
             }
             if (!Prefs.iptvPlayer().equals(iptvShown)) showIptvChip();

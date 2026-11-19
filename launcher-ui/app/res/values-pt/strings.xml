@@ -115,6 +115,7 @@
     <string name="hide">"Ocultar “"</string>
     <string name="hide_2">"Ocultar"</string>
     <string name="hide_from_the_menu">"Ocultar do menu"</string>
+    <string name="hide_purchases">"Ocultar opções de compra"</string>
     <string name="hide_rentals">"Ocultar opções de aluguel"</string>
     <string name="hide_services_without_installed_apps">"Ocultar serviços sem app instalado"</string>
     <string name="high_prefix">". Máxima "</string>

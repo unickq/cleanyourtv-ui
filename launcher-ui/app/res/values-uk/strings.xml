@@ -130,6 +130,7 @@
     <string name="hide">"Приховати «"</string>
     <string name="hide_2">"Приховати"</string>
     <string name="hide_from_the_menu">"Приховати з меню"</string>
+    <string name="hide_purchases">"Приховувати купівлю"</string>
     <string name="hide_rentals">"Приховувати прокат"</string>
     <string name="hide_services_without_installed_apps">"Приховувати сервіси без установлених застосунків"</string>
     <string name="high_prefix">". Максимум "</string>
