@@ -57,7 +57,7 @@ public class KinoLoginActivity extends Activity {
     private void connected() {
         box.removeAllViews();
         line(52, "KinoPub connected");
-        line(28, "Open a TMDB title and choose Open in KinoWatch.");
+        line(28, "Open a TMDB title and choose KinoWatch under Where to watch.");
         TextView disconnect = TvUi.button(this, k, "Disconnect KinoPub", v -> {
             worker = new Thread(() -> {
                 try {

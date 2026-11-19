@@ -237,6 +237,9 @@ final class Prefs {
     static boolean showAllProviders() { return sp().getBoolean("showAllProviders", false); }
     static void setShowAllProviders(boolean on) { put("showAllProviders", on); }
 
+    static boolean hideServicesWithoutApps() { return sp().getBoolean("hideServicesWithoutApps", false); }
+    static void setHideServicesWithoutApps(boolean on) { put("hideServicesWithoutApps", on); }
+
     // MARK: - Trailer player
 
     /** The app the Trailer button opens, or "" for the built-in pick (YouTube, then another YouTube-capable player). */

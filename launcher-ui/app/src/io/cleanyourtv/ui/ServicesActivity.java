@@ -2,6 +2,9 @@ package io.cleanyourtv.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -68,6 +71,12 @@ public class ServicesActivity extends Activity {
                     Prefs.setShowAllProviders(!Prefs.showAllProviders());
                     build(providers);
                 }));
+        list.addView(row("hideWithoutApps", null, Ui.tr("Ocultar serviços sem app instalado", "Hide services without installed apps"),
+                Prefs.hideServicesWithoutApps() ? Ui.tr("Ligado", "On") : Ui.tr("Desligado", "Off"), v -> {
+                    Prefs.setHideServicesWithoutApps(!Prefs.hideServicesWithoutApps());
+                    build(providers);
+                }));
+        list.addView(kinoWatchRow());
         if (providers == null) {
             TextView loading = TvUi.text(this, k, 26, Ui.regular, TvUi.DIM);
             loading.setText(Ui.tr("Carregando os serviços…", "Loading the services…"));
@@ -96,6 +105,18 @@ public class ServicesActivity extends Activity {
         String app = Providers.app(this, p.id, p.name);
         if (app == null) return Ui.tr("Sem app na TV", "No app on the TV");
         return (pick.isEmpty() ? Ui.tr("Automático · ", "Automatic · ") : "") + Providers.label(this, app);
+    }
+
+    private View kinoWatchRow() {
+        ImageView icon = null;
+        try {
+            Drawable drawable = getPackageManager().getApplicationIcon(KinoPub.PLAYER_PACKAGE);
+            icon = new ImageView(this);
+            icon.setImageDrawable(drawable);
+        } catch (PackageManager.NameNotFoundException ignored) {
+        }
+        return rowWithIcon("kinowatch", icon, "KinoWatch", "KinoPub account",
+                v -> startActivity(new Intent(this, KinoLoginActivity.class)));
     }
 
     private String trailerPlayerValue() {
@@ -171,20 +192,27 @@ public class ServicesActivity extends Activity {
     }
 
     private View row(Object tag, String logo, String name, String value, View.OnClickListener click) {
+        ImageView icon = null;
+        if (logo != null) {
+            icon = new ImageView(this);
+            Images.load(icon, logo.isEmpty() ? null : Tmdb.LOGO + logo);
+        }
+        return rowWithIcon(tag, icon, name, value, click);
+    }
+
+    private View rowWithIcon(Object tag, ImageView icon, String name, String value, View.OnClickListener click) {
         LinearLayout row = new LinearLayout(this);
         row.setTag(tag);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(Math.round(26 * k), Math.round(14 * k), Math.round(30 * k), Math.round(14 * k));
-        if (logo != null) {
-            ImageView img = new ImageView(this);
-            img.setClipToOutline(true);
-            img.setBackground(TvUi.round(0x00000000, 10 * k));
-            Images.load(img, logo.isEmpty() ? null : Tmdb.LOGO + logo);
+        if (icon != null) {
+            icon.setClipToOutline(true);
+            icon.setBackground(TvUi.round(0x00000000, 10 * k));
             int s = Math.round(52 * k);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(s, s);
             lp.rightMargin = Math.round(22 * k);
-            row.addView(img, lp);
+            row.addView(icon, lp);
         }
         TextView n = TvUi.text(this, k, 30, Ui.medium, TvUi.INK);
         n.setText(name);

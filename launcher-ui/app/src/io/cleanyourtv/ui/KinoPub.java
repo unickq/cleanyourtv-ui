@@ -22,6 +22,7 @@ import java.util.Set;
 /** On-demand lookup; account tokens stay in this app's private preferences. */
 final class KinoPub {
     private KinoPub() {}
+    static final String PLAYER_PACKAGE = "watch.kino";
     private static final String API = "https://api.service-kp.com";
     // Public Kodi-client identity, also used by Neoniklain/kino-history-channel (Prefs.java).
     private static final String CLIENT_ID = "xbmc";
@@ -114,7 +115,7 @@ final class KinoPub {
     static void open(Context c, int id) {
         if (id <= 0) throw new IllegalArgumentException("Invalid KinoPub item ID");
         c.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://kino.watch/item/view/" + id))
-                .setPackage("watch.kino").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                .setPackage(PLAYER_PACKAGE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
     }
 
     private static JSONObject oauth(String path, String form) throws Exception {

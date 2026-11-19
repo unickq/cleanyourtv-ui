@@ -26,6 +26,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -53,7 +54,7 @@ public class DetailActivity extends Activity {
     private Tmdb.Title title;
     private LinearLayout content;
     private TextView listButton, seenButton, favButton, rateButton;
-    private TextView kinoButton;
+    private TextView kinoChipSubtitle;
     private boolean kinoLookingUp;
     private boolean inList, favorite;
     private int myRating;
@@ -188,10 +189,6 @@ public class DetailActivity extends Activity {
         String[] watchApp = firstApp(region);
         TvUi.Flow actions = new TvUi.Flow(this, Math.round(20 * k), Math.round(20 * k));
         actions.setPadding(Math.round(14 * k), Math.round(36 * k), Math.round(96 * k), Math.round(16 * k));
-        if (Providers.installed(this, "watch.kino")) {
-            kinoButton = TvUi.button(this, k, "▶  Open in KinoWatch", v -> watchKino());
-            actions.addView(kinoButton);
-        }
         if (watchApp != null) {
             actions.addView((TvUi.button(this, k, "▶  " + Ui.tr("Assistir em ", "Watch on ") + watchApp[1], v -> watch(watchApp[0]))));
         }
@@ -248,8 +245,12 @@ public class DetailActivity extends Activity {
         View first = actions.getChildAt(0);
         if (first != null) first.requestFocus();
         new Thread(() -> {
-            java.util.Map<String, String> links = DeepLinks.find(this, kind, id, name);
-            main.post(() -> { if (!isFinishing()) linksKnown(links); });
+            Map<String, String> links = DeepLinks.find(this, kind, id, name);
+            main.post(() -> {
+                if (isFinishing()) return;
+                watchLinks = links;
+                updateChipNotes();
+            });
         }).start();
     }
 
@@ -418,34 +419,60 @@ public class DetailActivity extends Activity {
     }
 
     private TvUi.Flow whereLine;
+    private TextView whereEmpty;
+    private JSONObject watchRegion;
+    private boolean hideServicesWithoutApps;
     private View iptvChip;
     private String iptvShown = "";
 
     private View whereToWatch(JSONObject region) {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
+        whereEmpty = TvUi.text(this, k, 26, Ui.regular, TvUi.DIM);
+        box.addView(whereEmpty);
         whereLine = new TvUi.Flow(this, Math.round(18 * k), Math.round(18 * k));
         whereLine.setPadding(0, Math.round(14 * k), Math.round(96 * k), Math.round(14 * k));
+        box.addView(whereLine, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        watchRegion = region;
+        refreshProviderChips();
+        showIptvChip();
+        return box;
+    }
+
+    private void refreshProviderChips() {
+        hideServicesWithoutApps = Prefs.hideServicesWithoutApps();
+        int firstProvider = iptvChip == null ? 0 : 1;
+        whereLine.removeViews(firstProvider, whereLine.getChildCount() - firstProvider);
+        chipNotes.clear();
+        kinoChipSubtitle = null;
+        if (Providers.installed(this, KinoPub.PLAYER_PACKAGE)) {
+            kinoChipSubtitle = chipSub(kinoSubtitle());
+            View kinoChip = chipBox(chipIcon(KinoPub.PLAYER_PACKAGE), "KinoWatch", kinoChipSubtitle);
+            kinoChip.setOnClickListener(v -> watchKino());
+            whereLine.addView(kinoChip);
+        }
         String[][] types = {{"flatrate", Ui.tr("Assinatura", "Subscription")}, {"free", Ui.tr("Grátis", "Free")},
                 {"ads", Ui.tr("Grátis com anúncios", "Free with ads")}, {"rent", Ui.tr("Aluguel", "Rent")}, {"buy", Ui.tr("Compra", "Buy")}};
         Set<String> added = new HashSet<>();
         for (String[] type : types) {
-            JSONArray list = region == null ? null : region.optJSONArray(type[0]);
+            JSONArray list = watchRegion == null ? null : watchRegion.optJSONArray(type[0]);
             for (int i = 0; list != null && i < list.length(); i++) {
                 JSONObject p = list.optJSONObject(i);
                 int pid = p.optInt("provider_id");
                 if (!added.add(pid + type[0])) continue;
-                whereLine.addView(chip(pid, p.optString("provider_name"), p.optString("logo_path"), type[1]));
+                String name = p.optString("provider_name");
+                if (Providers.showInWhereToWatch(this, name, hideServicesWithoutApps)) {
+                    whereLine.addView(chip(pid, name, p.optString("logo_path"), type[1]));
+                }
             }
         }
-        if (whereLine.getChildCount() == 0) {
-            TextView none = TvUi.text(this, k, 26, Ui.regular, TvUi.DIM);
-            none.setText(Ui.tr("Não está em nenhum serviço de streaming no Brasil agora.", "Not on any streaming service in the region right now."));
-            box.addView(none);
-        }
-        box.addView(whereLine, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        showIptvChip();
-        return box;
+        whereEmpty.setText(hideServicesWithoutApps
+                ? Ui.tr("Nenhum serviço de streaming deste título tem app oficial instalado.",
+                        "No streaming services for this title have an official app installed.")
+                : Ui.tr("Não está em nenhum serviço de streaming no Brasil agora.", "Not on any streaming service in the region right now."));
+        whereEmpty.setVisibility(whereLine.getChildCount() == firstProvider ? View.VISIBLE : View.GONE);
+        whereLine.setVisibility(whereLine.getChildCount() == 0 ? View.GONE : View.VISIBLE);
+        updateChipNotes();
     }
 
     /** The IPTV app picked in Settings › Services leads the row. IPTV has no catalog TMDB can check, so the chip
@@ -455,13 +482,8 @@ public class DetailActivity extends Activity {
         iptvShown = Prefs.iptvPlayer();
         iptvChip = null;
         if (!iptvShown.isEmpty() && Providers.installed(this, iptvShown)) {
-            ImageView img = new ImageView(this);
-            try {
-                img.setImageDrawable(getPackageManager().getApplicationIcon(iptvShown));
-            } catch (PackageManager.NameNotFoundException ignored) {
-            }
             String pkg = iptvShown;
-            iptvChip = chipBox(img, Providers.label(this, pkg), chipSub("movie".equals(kind)
+            iptvChip = chipBox(chipIcon(pkg), Providers.label(this, pkg), chipSub("movie".equals(kind)
                     ? Ui.tr("Buscar filme via IPTV", "Search movie via IPTV") : Ui.tr("Buscar série via IPTV", "Search show via IPTV")));
             iptvChip.setOnClickListener(v -> searchOrOpen(pkg));
             whereLine.addView(iptvChip, 0);
@@ -529,6 +551,15 @@ public class DetailActivity extends Activity {
         return s;
     }
 
+    private ImageView chipIcon(String pkg) {
+        ImageView img = new ImageView(this);
+        try {
+            img.setImageDrawable(getPackageManager().getApplicationIcon(pkg));
+        } catch (PackageManager.NameNotFoundException ignored) {
+        }
+        return img;
+    }
+
     /** The shape every "Onde assistir" chip shares: a logo, the name, and a dim line under it. */
     private LinearLayout chipBox(ImageView img, String name, TextView sub) {
         LinearLayout chip = new LinearLayout(this);
@@ -551,21 +582,29 @@ public class DetailActivity extends Activity {
         return chip;
     }
 
+    private String kinoSubtitle() {
+        return kinoLookingUp ? "Searching KinoPub…"
+                : Ui.tr("Assinatura", "Subscription");
+    }
+
+    private void setKinoLookingUp(boolean lookingUp) {
+        kinoLookingUp = lookingUp;
+        if (kinoChipSubtitle != null) kinoChipSubtitle.setText(kinoSubtitle());
+    }
+
     private void watchKino() {
         if (kinoLookingUp || title == null) return;
         if (!KinoPub.connected(this)) {
             startActivity(new Intent(this, KinoLoginActivity.class));
             return;
         }
-        kinoLookingUp = true;
-        kinoButton.setText("Searching KinoPub…");
+        setKinoLookingUp(true);
         new Thread(() -> {
             try {
                 List<JSONObject> matches = KinoPub.find(this, kind, id, title.name);
                 main.post(() -> {
                     if (isFinishing() || isDestroyed()) return;
-                    kinoLookingUp = false;
-                    kinoButton.setText("▶  Open in KinoWatch");
+                    setKinoLookingUp(false);
                     if (matches.isEmpty()) {
                         Toast.makeText(this, "No exact IMDb match found in KinoPub", Toast.LENGTH_LONG).show();
                     } else if (matches.size() == 1) {
@@ -585,8 +624,7 @@ public class DetailActivity extends Activity {
             } catch (Exception e) {
                 main.post(() -> {
                     if (isFinishing() || isDestroyed()) return;
-                    kinoLookingUp = false;
-                    kinoButton.setText("▶  Open in KinoWatch");
+                    setKinoLookingUp(false);
                     if (!KinoPub.connected(this)) startActivity(new Intent(this, KinoLoginActivity.class));
                     else Toast.makeText(this, "KinoPub lookup failed. Check the connection or reconnect under KinoPub account.", Toast.LENGTH_LONG).show();
                 });
@@ -614,12 +652,14 @@ public class DetailActivity extends Activity {
     }
 
     private final List<Object[]> chipNotes = new ArrayList<>();   // {app, subtitle view, kind of offer}
+    private Map<String, String> watchLinks;
 
     /** Once the links are known: the chips that open the title itself say so. */
-    private void linksKnown(java.util.Map<String, String> links) {
+    private void updateChipNotes() {
+        if (watchLinks == null) return;
         for (Object[] n : chipNotes) {
             String app = (String) n[0];
-            if (links.containsKey(app)) ((TextView) n[1]).setText(n[2] + "  ·  " + Ui.tr("abre o título em ", "opens the title in ") + Providers.label(this, app));
+            if (watchLinks.containsKey(app)) ((TextView) n[1]).setText(n[2] + "  ·  " + Ui.tr("abre o título em ", "opens the title in ") + Providers.label(this, app));
         }
     }
 
@@ -732,7 +772,10 @@ public class DetailActivity extends Activity {
     @Override protected void onStart() {
         super.onStart();
         if (stopped) TvUi.restoreImages(getWindow().getDecorView());
-        if (stopped && whereLine != null && !Prefs.iptvPlayer().equals(iptvShown)) showIptvChip();   // back from Settings › Services
+        if (stopped && whereLine != null) {
+            if (hideServicesWithoutApps != Prefs.hideServicesWithoutApps()) refreshProviderChips();
+            if (!Prefs.iptvPlayer().equals(iptvShown)) showIptvChip();
+        }
         stopped = false;
     }
 }
