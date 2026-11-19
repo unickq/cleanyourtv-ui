@@ -110,7 +110,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private final Scene scene = new Scene();
     private final HomeData data;
     private final Recs recs;
-    private final Click click;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final SharedPreferences ui;
     private final TvInputManager tvInputs;
@@ -141,6 +140,8 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private int tab, topIndex, cardIndex;
     private int widgetIndex;    // with TalkBack on, the drawer's weather (0) or quotes (1) card can take the focus
     private List<Recs.Pick> cards = new ArrayList<>();
+    private String recommendationPackage = "";
+    private boolean appRecommendations;
     // One flat run of pages, three cards each: every full page of Explore, then of Movies, then of Shows, and round
     // again. → past the last card moves on one page, ← back one; the tabs follow, and choosing a tab jumps to its
     // first page. The leftover picks of a tab's short last page are skipped, so no card is ever empty.
@@ -360,7 +361,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         activity = a;
         data = HomeData.get(a);
         recs = Recs.get(a);
-        click = new Click(a);
         ui = a.getSharedPreferences("home-ui", Context.MODE_PRIVATE);
         tvInputs = (TvInputManager) a.getSystemService(Context.TV_INPUT_SERVICE);
         setFocusable(true);
@@ -446,7 +446,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
 
     void destroy() {
         pause();
-        click.release();
     }
 
     /** Starting state (Home pressed while the home screen is showing): first app focused, drawer and sheet closed. */
@@ -1734,7 +1733,16 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
 
     /** Sets the springs' targets from the current focus (snap: no animation). */
     private void retarget(boolean snap) {
-        // Only the group whose focus changed is redrawn (moving along the shelf doesn't redraw the hero or capsule).
+        if (!sheetOpen && zone == Z_SHELF && shelfIndex < shelf.size()) {
+            String pkg = shelf.get(shelfIndex).pkg;
+            if (pkg != null && !pkg.equals(recommendationPackage)) {
+                recommendationPackage = pkg;
+                page = tabFirst[tab];
+                updateCards();
+                heroDirty = true;
+            }
+        }
+        // Other focus groups keep their cached drawing.
         boolean tilesChanged = aim(tileFocus, !sheetOpen && zone == Z_SHELF ? shelfIndex : -1, snap);
         boolean statusChanged = aim(statusFocus, !sheetOpen && zone == Z_STATUS ? statusIndex : -1, snap);
         boolean drawerChanged = aim(drawerFocus, !sheetOpen && zone == Z_DRAWER ? drawerIndex : -1, snap);
@@ -2026,7 +2034,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         } else {
             return;
         }
-        click.move();
     }
 
     private void move(int dx, int dy) {
@@ -2111,7 +2118,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
                 break;
         }
         retarget(false);
-        click.move();
     }
 
     private static int nearest(RectF[] rects, float x) {
@@ -2143,7 +2149,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         if (next == gridIndex) return;
         gridIndex = next;
         retargetGrid(false);
-        click.move();
         gridDirty = true;
     }
 
@@ -2163,7 +2168,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         } else if (zone == Z_HERO) {
             Recs.Pick p = currentPick();
             if (p == null) return;
-            click.open();
             DetailActivity.open(getContext(), p.kind, p.id);
             return;
         } else if (zone == Z_STATUS) {
@@ -2184,7 +2188,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         } else if (zone == Z_CARDS) {
             Recs.Pick p = cardIndex < cards.size() ? cards.get(cardIndex) : null;
             if (p == null) return;
-            click.open();
             DetailActivity.open(getContext(), p.kind, p.id);
             return;
         } else {
@@ -2192,7 +2195,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             it = shelf.get(shelfIndex);
             r = tileRects[shelfIndex];
         }
-        click.open();
         if (it.kind == HomeApps.ALL_APPS) {
             openSheet();
             return;
@@ -2271,7 +2273,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         getLocationInWindow(at);
         android.graphics.Rect anchor = new android.graphics.Rect(Math.round(r.left) + at[0], Math.round(r.top) + at[1],
                 Math.round(r.right) + at[0], Math.round(r.bottom) + at[1]);
-        click.open();
         TvUi.popover(activity, this, anchor, it.label, labels.toArray(new String[0]), which -> actions.get(which).run(), night < 0.5f);
     }
 
@@ -2285,7 +2286,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         liftIndex = shelfIndex;
         reorderAt = SystemClock.uptimeMillis();
         moveLift.target = 1;
-        click.open();
         showToast(Ui.tr("← → para mover · OK para soltar · Voltar para cancelar",
                 "← → to move · OK to drop · Back to cancel"));
         retarget(false);    // TalkBack reads "Moving <app>, position i of n"
@@ -2318,7 +2318,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
                 } else {
                     if (backDown && !e.isCanceled()) {
                         cancelReorder(false);
-                        click.move();
                     }
                     backDown = false;
                 }
@@ -2353,7 +2352,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         reorderAnim = true;
         wake();
         retarget(false);
-        click.move();
     }
 
     /** OK: drops the app where it is and saves the shelf's new order. */
@@ -2364,7 +2362,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         boolean changed = false;
         for (int i = 0; i < shelf.size() && !changed; i++) changed = shelf.get(i) != reorderOrigin.get(i);
         reorderOrigin = null;
-        click.open();
         retarget(false);
         if (!changed) return;
         final List<String> order = new ArrayList<>();
@@ -2577,7 +2574,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             gridIndex = i;
             retargetGrid(false);
             gridDirty = true;
-            click.move();
             return;
         }
         if (sheetOpen || reordering) return;
@@ -2612,7 +2608,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         }
         zone = group;
         retarget(false);
-        click.move();
     }
 
     private static String label(List<HomeApps.Item> list, int i) {
@@ -2700,8 +2695,10 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private void updateCards() {
         // Where we are in the tab: a new list (every hour, or details that drop a pick) keeps the tab and the page.
         int inTab = Math.max(0, page - tabFirst[tab]);
+        appRecommendations = !Recs.forApp(recs.all(null), recommendationPackage).isEmpty();
         for (int t = 0; t < 3; t++) {
-            tabPicks[t] = recs.all(TAB_KIND[t]);
+            List<Recs.Pick> available = recs.all(TAB_KIND[t]);
+            tabPicks[t] = appRecommendations ? Recs.forApp(available, recommendationPackage) : available;
             int pages = tabPicks[t].isEmpty() ? 0 : Math.max(1, tabPicks[t].size() / 3);
             tabFirst[t + 1] = tabFirst[t] + pages;
         }
@@ -2811,7 +2808,8 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             if (HomeData.coinCount() > 0) drawQuotes(c);
             return;
         }
-        String hello = Ui.tr("Para você", "For You");
+        String hello = appRecommendations && shelfIndex < shelf.size()
+                ? shelf.get(shelfIndex).label : Ui.tr("Para você", "For You");
         float helloX = Ui.he ? CONTENT_R * k - lTitle.measureText(hello) : MARGIN * k - Ui.leftBearing(lTitle, hello);
         c.drawText(hello, helloX, L_TITLE_BASE * k, lTitle);
         // Text tabs (the selected one in bold, in the main text color); with focus on the tabs, the selected one gets
@@ -3035,7 +3033,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
                 return false;
         }
         retarget(false);
-        click.move();
         return true;
     }
 

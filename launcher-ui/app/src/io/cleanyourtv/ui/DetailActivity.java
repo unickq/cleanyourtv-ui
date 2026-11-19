@@ -53,6 +53,8 @@ public class DetailActivity extends Activity {
     private Tmdb.Title title;
     private LinearLayout content;
     private TextView listButton, seenButton, favButton, rateButton;
+    private TextView kinoButton;
+    private boolean kinoLookingUp;
     private boolean inList, favorite;
     private int myRating;
 
@@ -186,6 +188,10 @@ public class DetailActivity extends Activity {
         String[] watchApp = firstApp(region);
         TvUi.Flow actions = new TvUi.Flow(this, Math.round(20 * k), Math.round(20 * k));
         actions.setPadding(Math.round(14 * k), Math.round(36 * k), Math.round(96 * k), Math.round(16 * k));
+        if (Providers.installed(this, "watch.kino")) {
+            kinoButton = TvUi.button(this, k, "▶  Open in KinoWatch", v -> watchKino());
+            actions.addView(kinoButton);
+        }
         if (watchApp != null) {
             actions.addView((TvUi.button(this, k, "▶  " + Ui.tr("Assistir em ", "Watch on ") + watchApp[1], v -> watch(watchApp[0]))));
         }
@@ -543,6 +549,58 @@ public class DetailActivity extends Activity {
         chip.addView(texts);
         TvUi.softFocus(chip, k, 18 * k);
         return chip;
+    }
+
+    private void watchKino() {
+        if (kinoLookingUp || title == null) return;
+        if (!KinoPub.connected(this)) {
+            startActivity(new Intent(this, KinoLoginActivity.class));
+            return;
+        }
+        kinoLookingUp = true;
+        kinoButton.setText("Searching KinoPub…");
+        new Thread(() -> {
+            try {
+                List<JSONObject> matches = KinoPub.find(this, kind, id, title.name);
+                main.post(() -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    kinoLookingUp = false;
+                    kinoButton.setText("▶  Open in KinoWatch");
+                    if (matches.isEmpty()) {
+                        Toast.makeText(this, "No exact IMDb match found in KinoPub", Toast.LENGTH_LONG).show();
+                    } else if (matches.size() == 1) {
+                        openKino(matches.get(0));
+                    } else {
+                        String[] labels = new String[matches.size()];
+                        for (int n = 0; n < labels.length; n++) {
+                            JSONObject item = matches.get(n);
+                            labels[n] = item.optString("title") + " (" + item.optInt("year") + ") · "
+                                    + item.optString("quality") + " · " + item.optString("voice");
+                        }
+                        new AlertDialog.Builder(this).setTitle("Choose KinoPub version")
+                                .setItems(labels, (dialog, which) -> openKino(matches.get(which)))
+                                .setNegativeButton("Cancel", null).show();
+                    }
+                });
+            } catch (Exception e) {
+                main.post(() -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    kinoLookingUp = false;
+                    kinoButton.setText("▶  Open in KinoWatch");
+                    if (!KinoPub.connected(this)) startActivity(new Intent(this, KinoLoginActivity.class));
+                    else Toast.makeText(this, "KinoPub lookup failed. Check the connection or reconnect under KinoPub account.", Toast.LENGTH_LONG).show();
+                });
+            }
+        }, "kinopub-lookup").start();
+    }
+
+    private void openKino(JSONObject item) {
+        try {
+            KinoPub.open(this, item.optInt("id"));
+            if (title != null) Tmdb.setSeen(this, title, true);
+        } catch (RuntimeException e) {
+            Toast.makeText(this, "KinoWatch couldn't open this title", Toast.LENGTH_LONG).show();
+        }
     }
 
     /** Opens the title in the app (a Wikidata deep link), or else the app's home. */

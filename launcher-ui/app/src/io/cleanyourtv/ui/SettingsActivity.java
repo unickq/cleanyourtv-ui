@@ -195,7 +195,7 @@ public class SettingsActivity extends Activity {
                     String[] names = {Ui.tr("Tela de Descanso, ver agora", "Screensaver, preview") + ", " + styleName(Prefs.screensaverStyle()),
                             Ui.tr("Ajustes do Início", "Home Settings"),
                             Ui.tr("Prateleira", "Shelf"), Ui.tr("Botões do Controle", "Remote Buttons"), Ui.tr("Serviços", "Services"),
-                            Ui.tr("Conta TMDB, ", "TMDB account, ") + account(), Ui.tr("Ajustes da TV", "TV Settings")};
+                            Ui.tr("Conta TMDB, ", "TMDB account, ") + account(), "KinoPub account", Ui.tr("Ajustes da TV", "TV Settings")};
                     return row < names.length ? names[row] : "";
                 }
                 case HOME_SETTINGS: {
@@ -297,7 +297,7 @@ public class SettingsActivity extends Activity {
 
         private int rowCount() {
             switch (screen) {
-                case MAIN: return 7;
+                case MAIN: return 8;
                 case HOME_SETTINGS: return settingLabels().length;
                 case PICKER: return Math.min(PICK_VISIBLE, pickLabels.size());
                 case SHELF_EDIT: return Math.min(PICK_VISIBLE, shelfRows.size());
@@ -336,7 +336,7 @@ public class SettingsActivity extends Activity {
         private void drawMain(Canvas c) {
             String[] labels = {Ui.tr("Tela de Descanso", "Screensaver"), Ui.tr("Ajustes do Início", "Home Settings"),
                     Ui.tr("Prateleira", "Shelf"), Ui.tr("Botões do Controle", "Remote Buttons"), Ui.tr("Serviços", "Services"),
-                    Ui.tr("Conta TMDB", "TMDB account"), Ui.tr("Ajustes da TV", "TV Settings")};
+                    Ui.tr("Conta TMDB", "TMDB account"), "KinoPub account", Ui.tr("Ajustes da TV", "TV Settings")};
             for (int i = 0; i < labels.length; i++) {
                 float y = (LIST_TOP + i * (ROW_H + ROW_GAP)) * k;
                 rowRect.set(LIST_X * k, y, LIST_R * k, y + ROW_H * k);
@@ -345,11 +345,13 @@ public class SettingsActivity extends Activity {
                 float base = rowRect.centerY() + Ui.halfCap(rowLabel);
                 c.drawText(labels[i], rowRect.left + 30 * k, base, rowLabel);
                 float right = rowRect.right - 30 * k;
-                if (i == 0 || i == 5) {
+                if (i == 0 || i == 5 || i == 6) {
                     rowValue.setColor(blend(0x8CFFFFFF, 0x8C1C1C1E, f));
                     // The screensaver's style: ← → change it (shown while focused), OK shows it.
                     String style = styleName(Prefs.screensaverStyle());
-                    c.drawText(i == 5 ? account() : f > 0.5f ? "‹  " + style + "  ›" : style, right, base, rowValue);
+                    String value = i == 6 ? (KinoPub.connected(getContext()) ? "Connected" : "Not connected")
+                            : i == 5 ? account() : f > 0.5f ? "‹  " + style + "  ›" : style;
+                    c.drawText(value, right, base, rowValue);
                 } else {
                     float cw = Symbols.width(getContext(), "chevron_right", 22 * k);
                     Symbols.draw(getContext(), c, "chevron_right", right - cw / 2, rowRect.centerY(), 22 * k, blend(0x66FFFFFF, 0x991C1C1E, f));
@@ -959,6 +961,8 @@ public class SettingsActivity extends Activity {
             } else if (focus == 5) {
                 // A release APK comes without a key: it is typed here once (or pushed in config.json "tmdb_key").
                 if (Tmdb.hasKey()) activity.startActivity(new Intent(c, TmdbLoginActivity.class)); else askTmdbKey();
+            } else if (focus == 6) {
+                activity.startActivity(new Intent(c, KinoLoginActivity.class));
             } else {
                 activity.startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             }

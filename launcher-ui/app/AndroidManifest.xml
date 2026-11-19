@@ -13,6 +13,7 @@
          returns null). The shelf and streaming apps, the live TV apps and, through the <intent>, every TV app
          (for "All Apps"). -->
     <queries>
+        <package android:name="watch.kino" />
         <package android:name="com.netflix.ninja" />
         <package android:name="com.google.android.youtube.tv" />
         <package android:name="com.amazon.amazonvideo.livingroom" />
@@ -149,6 +150,14 @@
 
         <activity
             android:name=".TmdbLoginActivity"
+            android:process=":home"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|smallestScreenSize|uiMode|density|fontScale|locale|layoutDirection"
+            android:theme="@style/CleanYourTV.Home" />
+
+        <activity
+            android:name=".KinoLoginActivity"
             android:process=":home"
             android:exported="false"
             android:screenOrientation="landscape"
