@@ -1090,7 +1090,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
                 if (why != null || got.isEmpty()) {
                     tabBody.addView(note(why != null ? why : Ui.tr("Nada aqui ainda. Abra um título para marcar.", "Nothing here yet. Open a title to add it.")));
                 } else {
-                    tabBody.addView(note(got.size() == 1 ? Ui.tr("1 título", "1 title") : got.size() + Ui.tr(" títulos", " titles")));
+                    tabBody.addView(note(Ui.titleCount(got.size())));
                     TvUi.Grid grid = new TvUi.Grid(this, k, 7, this::open);
                     grid.add(got);
                     tabBody.addView(grid);
@@ -1492,6 +1492,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     private static String yearLabel(String y) {
         if (y.equals("old")) return Ui.tr("Antes de 1990", "Before 1990");
         if (y.endsWith("s") && Ui.tur) return Turkish.decade(y.substring(0, 4));
+        if (y.endsWith("s") && Ui.ru) return y.substring(0, 4) + "-е";
         if (y.endsWith("s")) return Ui.tr("Anos ", "The ") + y.substring(0, 4) + (Ui.tr("", "s"));
         return y;
     }

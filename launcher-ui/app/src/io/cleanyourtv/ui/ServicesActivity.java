@@ -115,7 +115,7 @@ public class ServicesActivity extends Activity {
             icon.setImageDrawable(drawable);
         } catch (PackageManager.NameNotFoundException ignored) {
         }
-        return rowWithIcon("kinowatch", icon, "KinoWatch", "KinoPub account",
+        return rowWithIcon("kinowatch", icon, "KinoWatch", Ui.tr("KinoPub account"),
                 v -> startActivity(new Intent(this, KinoLoginActivity.class)));
     }
 

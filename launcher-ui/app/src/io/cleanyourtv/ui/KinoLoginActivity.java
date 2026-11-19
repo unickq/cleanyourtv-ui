@@ -56,15 +56,15 @@ public class KinoLoginActivity extends Activity {
 
     private void connected() {
         box.removeAllViews();
-        line(52, "KinoPub connected");
-        line(28, "Open a TMDB title and choose KinoWatch under Where to watch.");
-        TextView disconnect = TvUi.button(this, k, "Disconnect KinoPub", v -> {
+        line(52, Ui.tr("KinoPub connected"));
+        line(28, Ui.tr("Open a TMDB title and choose KinoWatch under Where to watch."));
+        TextView disconnect = TvUi.button(this, k, Ui.tr("Disconnect KinoPub"), v -> {
             worker = new Thread(() -> {
                 try {
                     KinoPub.disconnect(this);
                     main.post(() -> { if (!isFinishing() && !cancelled) finish(); });
                 } catch (Exception e) {
-                    main.post(() -> { if (!isFinishing() && !cancelled) line(26, "Couldn't disconnect. Please try again."); });
+                    main.post(() -> { if (!isFinishing() && !cancelled) line(26, Ui.tr("Couldn't disconnect. Please try again.")); });
                 }
             });
             worker.start();
@@ -74,8 +74,8 @@ public class KinoLoginActivity extends Activity {
     }
 
     private void login() {
-        line(52, "Connect KinoPub");
-        status = line(28, "Getting an activation code…");
+        line(52, Ui.tr("Connect KinoPub"));
+        status = line(28, Ui.tr("Getting an activation code…"));
         worker = new Thread(() -> {
             try {
                 JSONObject code = KinoPub.deviceCode();
@@ -85,8 +85,8 @@ public class KinoLoginActivity extends Activity {
                 main.post(() -> {
                     if (cancelled || isFinishing()) return;
                     box.removeAllViews();
-                    line(52, "Connect KinoPub");
-                    line(28, "Open kino.watch/device, sign in and enter this code:");
+                    line(52, Ui.tr("Connect KinoPub"));
+                    line(28, Ui.tr("Open kino.watch/device, sign in and enter this code:"));
                     line(68, user);
                     ImageView qr = new ImageView(this);
                     android.graphics.Bitmap bitmap = TmdbLoginActivity.render(Qr.encode("https://kino.watch/device"), Math.round(270 * k));
@@ -95,7 +95,7 @@ public class KinoLoginActivity extends Activity {
                     int pad = Math.round(16 * k);
                     qr.setPadding(pad, pad, pad, pad);
                     box.addView(qr, new LinearLayout.LayoutParams(bitmap.getWidth() + 2 * pad, bitmap.getHeight() + 2 * pad));
-                    status = line(26, "Waiting for approval…  ·  Back cancels");
+                    status = line(26, Ui.tr("Waiting for approval…  ·  Back cancels"));
                 });
                 while (!cancelled && SystemClock.elapsedRealtime() < until) {
                     Thread.sleep(interval);
@@ -105,7 +105,7 @@ public class KinoLoginActivity extends Activity {
                         main.post(() -> {
                             if (cancelled || isFinishing()) return;
                             try { KinoPub.save(this, tokens); connected(); }
-                            catch (Exception e) { status.setText("Couldn't save the KinoPub session. Go back and try again."); }
+                            catch (Exception e) { status.setText(Ui.tr("Couldn't save the KinoPub session. Go back and try again.")); }
                         });
                         return;
                     } catch (KinoPub.ApiError e) {
@@ -113,10 +113,14 @@ public class KinoLoginActivity extends Activity {
                         else if (!"authorization_pending".equals(e.error)) throw e;
                     }
                 }
-                main.post(() -> { if (!cancelled) status.setText("The code expired. Go back and open KinoPub account again."); });
+                main.post(() -> {
+                    if (!cancelled) status.setText(Ui.tr("The code expired. Go back and open KinoPub account again."));
+                });
             } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
             catch (Exception e) {
-                main.post(() -> { if (!cancelled) status.setText("Couldn't connect to KinoPub. Go back and try again."); });
+                main.post(() -> {
+                    if (!cancelled) status.setText(Ui.tr("Couldn't connect to KinoPub. Go back and try again."));
+                });
             }
         }, "kinopub-login");
         worker.start();

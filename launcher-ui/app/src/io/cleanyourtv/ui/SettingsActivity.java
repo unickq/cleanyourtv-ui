@@ -195,7 +195,7 @@ public class SettingsActivity extends Activity {
                     String[] names = {Ui.tr("Tela de Descanso, ver agora", "Screensaver, preview") + ", " + styleName(Prefs.screensaverStyle()),
                             Ui.tr("Ajustes do Início", "Home Settings"),
                             Ui.tr("Prateleira", "Shelf"), Ui.tr("Botões do Controle", "Remote Buttons"), Ui.tr("Serviços", "Services"),
-                            Ui.tr("Conta TMDB, ", "TMDB account, ") + account(), "KinoPub account", Ui.tr("Ajustes da TV", "TV Settings")};
+                            Ui.tr("Conta TMDB, ", "TMDB account, ") + account(), Ui.tr("KinoPub account"), Ui.tr("Ajustes da TV", "TV Settings")};
                     return row < names.length ? names[row] : "";
                 }
                 case HOME_SETTINGS: {
@@ -336,7 +336,7 @@ public class SettingsActivity extends Activity {
         private void drawMain(Canvas c) {
             String[] labels = {Ui.tr("Tela de Descanso", "Screensaver"), Ui.tr("Ajustes do Início", "Home Settings"),
                     Ui.tr("Prateleira", "Shelf"), Ui.tr("Botões do Controle", "Remote Buttons"), Ui.tr("Serviços", "Services"),
-                    Ui.tr("Conta TMDB", "TMDB account"), "KinoPub account", Ui.tr("Ajustes da TV", "TV Settings")};
+                    Ui.tr("Conta TMDB", "TMDB account"), Ui.tr("KinoPub account"), Ui.tr("Ajustes da TV", "TV Settings")};
             for (int i = 0; i < labels.length; i++) {
                 float y = (LIST_TOP + i * (ROW_H + ROW_GAP)) * k;
                 rowRect.set(LIST_X * k, y, LIST_R * k, y + ROW_H * k);
@@ -349,7 +349,7 @@ public class SettingsActivity extends Activity {
                     rowValue.setColor(blend(0x8CFFFFFF, 0x8C1C1C1E, f));
                     // The screensaver's style: ← → change it (shown while focused), OK shows it.
                     String style = styleName(Prefs.screensaverStyle());
-                    String value = i == 6 ? (KinoPub.connected(getContext()) ? "Connected" : "Not connected")
+                    String value = i == 6 ? Ui.tr(KinoPub.connected(getContext()) ? "Connected" : "Not connected")
                             : i == 5 ? account() : f > 0.5f ? "‹  " + style + "  ›" : style;
                     c.drawText(value, right, base, rowValue);
                 } else {

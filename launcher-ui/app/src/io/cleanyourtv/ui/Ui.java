@@ -146,6 +146,15 @@ final class Ui {
         return Math.max(0, Math.min(1, v));
     }
 
+    static String tr(String english) {
+        return tr(english, english);
+    }
+
+    static String titleCount(int count) {
+        if (ru) return Russian.count(count, "название", "названия", "названий");
+        return count == 1 ? tr("1 título", "1 title") : count + tr(" títulos", " titles");
+    }
+
     static String tr(String pt, String english) {
         return he ? Hebrew.text(english) : tur ? Turkish.text(english) : fr ? French.text(english) : de ? German.text(english) : ru ? Russian.text(english)
                 : es ? Spanish.text(english) : en ? english : pt;

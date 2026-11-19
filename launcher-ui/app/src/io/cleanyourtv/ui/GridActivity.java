@@ -84,7 +84,7 @@ public class GridActivity extends Activity {
             open = (TvUi.OnTitle) list[1];
             grid = new TvUi.Grid(this, k, COLUMNS, open);
             grid.add(titles);
-            status.setText(titles.size() == 1 ? Ui.tr("1 título", "1 title") : titles.size() + Ui.tr(" títulos", " titles"));
+            status.setText(Ui.titleCount(titles.size()));
         } else {
             grid = new TvUi.Grid(this, k, COLUMNS, open);
             status.setText(Ui.tr("Carregando…", "Loading…"));
@@ -120,8 +120,9 @@ public class GridActivity extends Activity {
                     int total = o.optInt("total_results", 0);
                     boolean first = grid.count == 0;
                     grid.add(titles);
-                    status.setText(grid.count == 0 ? Ui.tr("Nada encontrado.", "Nothing found.")
-                            : total > 0 ? total + Ui.tr(" títulos · dados do TMDB", " titles · data from TMDB") : "");
+                    String count = Ui.ru ? Ui.titleCount(total) + " · данные TMDB"
+                            : total + Ui.tr(" títulos · dados do TMDB", " titles · data from TMDB");
+                    status.setText(grid.count == 0 ? Ui.tr("Nada encontrado.", "Nothing found.") : total > 0 ? count : "");
                     loading = false;
                     if (first && grid.getChildCount() > 0) grid.getChildAt(0).requestFocus();
                 });

@@ -142,7 +142,10 @@ public class DetailActivity extends Activity {
         int runtime = o.optInt("runtime");
         if (movie && runtime > 0) meta.add(runtime >= 60 ? (runtime / 60) + " h " + (runtime % 60) + " min" : runtime + " min");
         int seasons = o.optInt("number_of_seasons");
-        if (!movie && seasons > 0) meta.add(seasons == 1 ? Ui.tr("1 temporada", "1 season") : seasons + Ui.tr(" temporadas", " seasons"));
+        if (!movie && seasons > 0) {
+            meta.add(Ui.ru ? Russian.count(seasons, "сезон", "сезона", "сезонов")
+                    : seasons == 1 ? Ui.tr("1 temporada", "1 season") : seasons + Ui.tr(" temporadas", " seasons"));
+        }
         double vote = o.optDouble("vote_average");
         if (vote > 0) meta.add(String.format(Ui.PT, "★ %.1f (%d)", vote, o.optInt("vote_count")));
         TextView m = TvUi.text(this, k, 28, Ui.medium, TvUi.DIM);
@@ -538,8 +541,8 @@ public class DetailActivity extends Activity {
         View chip = chipBox(img, name, s);
         chip.setOnClickListener(v -> {
             if (app != null) watch(app);
-            else Toast.makeText(this, Ui.tr("Nenhum app para " + name + ". Escolha um em Ajustes › Serviços.",
-                    "No app for " + name + ". Pick one in Settings › Services."), Toast.LENGTH_LONG).show();
+            else Toast.makeText(this, String.format(Ui.tr("Nenhum app para %s. Escolha um em Ajustes › Serviços.",
+                    "No app for %s. Pick one in Settings › Services."), name), Toast.LENGTH_LONG).show();
         });
         return chip;
     }
@@ -583,7 +586,7 @@ public class DetailActivity extends Activity {
     }
 
     private String kinoSubtitle() {
-        return kinoLookingUp ? "Searching KinoPub…"
+        return kinoLookingUp ? Ui.tr("Searching KinoPub…")
                 : Ui.tr("Assinatura", "Subscription");
     }
 
@@ -606,7 +609,7 @@ public class DetailActivity extends Activity {
                     if (isFinishing() || isDestroyed()) return;
                     setKinoLookingUp(false);
                     if (matches.isEmpty()) {
-                        Toast.makeText(this, "No exact IMDb match found in KinoPub", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, Ui.tr("No exact IMDb match found in KinoPub"), Toast.LENGTH_LONG).show();
                     } else if (matches.size() == 1) {
                         openKino(matches.get(0));
                     } else {
@@ -616,9 +619,9 @@ public class DetailActivity extends Activity {
                             labels[n] = item.optString("title") + " (" + item.optInt("year") + ") · "
                                     + item.optString("quality") + " · " + item.optString("voice");
                         }
-                        new AlertDialog.Builder(this).setTitle("Choose KinoPub version")
+                        new AlertDialog.Builder(this).setTitle(Ui.tr("Choose KinoPub version"))
                                 .setItems(labels, (dialog, which) -> openKino(matches.get(which)))
-                                .setNegativeButton("Cancel", null).show();
+                                .setNegativeButton(Ui.tr("Cancel"), null).show();
                     }
                 });
             } catch (Exception e) {
@@ -626,7 +629,8 @@ public class DetailActivity extends Activity {
                     if (isFinishing() || isDestroyed()) return;
                     setKinoLookingUp(false);
                     if (!KinoPub.connected(this)) startActivity(new Intent(this, KinoLoginActivity.class));
-                    else Toast.makeText(this, "KinoPub lookup failed. Check the connection or reconnect under KinoPub account.", Toast.LENGTH_LONG).show();
+                    else Toast.makeText(this, Ui.tr("KinoPub lookup failed. Check the connection or reconnect under KinoPub account."),
+                            Toast.LENGTH_LONG).show();
                 });
             }
         }, "kinopub-lookup").start();
@@ -637,7 +641,7 @@ public class DetailActivity extends Activity {
             KinoPub.open(this, item.optInt("id"));
             if (title != null) Tmdb.setSeen(this, title, true);
         } catch (RuntimeException e) {
-            Toast.makeText(this, "KinoWatch couldn't open this title", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, Ui.tr("KinoWatch couldn't open this title"), Toast.LENGTH_LONG).show();
         }
     }
 
