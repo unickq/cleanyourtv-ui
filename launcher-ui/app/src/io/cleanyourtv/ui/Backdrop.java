@@ -146,12 +146,12 @@ final class Backdrop {
         return new Bitmap[] {out, frost};
     }
 
-    /** The center of the photo at the card's aspect ratio, filtered down (halving while possible) to the exact size. */
+    /** Crop from the top so wide cards retain titles and faces near the upper edge. */
     private static Bitmap card(Bitmap full, int w, int h) {
         float ratio = (float) w / h;
         int cw = Math.min(full.getWidth(), Math.round(full.getHeight() * ratio));
         int ch = Math.min(full.getHeight(), Math.round(cw / ratio));
-        Bitmap b = Bitmap.createBitmap(full, (full.getWidth() - cw) / 2, (full.getHeight() - ch) / 2, cw, ch);
+        Bitmap b = Bitmap.createBitmap(full, (full.getWidth() - cw) / 2, 0, cw, ch);
         while (b.getWidth() / 2 >= w) {
             Bitmap half = Bitmap.createScaledBitmap(b, b.getWidth() / 2, b.getHeight() / 2, true);
             if (b != full) b.recycle();

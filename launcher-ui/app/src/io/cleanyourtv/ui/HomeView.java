@@ -104,6 +104,12 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private final HomeData data;
     private final Recs recs;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable followCardBackdrop = () -> {
+        if (this.running) {
+            updateCardBackdrop();
+            wake();
+        }
+    };
     private final SharedPreferences ui;
     private final TvInputManager tvInputs;
     private final Spoken spoken = new Spoken(this, new Spoken.Source() {
@@ -426,6 +432,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     void pause() {
         if (!running) return;
         running = false;
+        handler.removeCallbacks(followCardBackdrop);
         cancelReorder(true);
         handler.removeCallbacks(holdStart);
         okHeld = holdArmed = false;
@@ -1741,6 +1748,8 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         statusDirty |= snap || statusChanged;
         heroDirty |= snap || heroChanged;
         drawerDirty |= snap || drawerChanged;
+        handler.removeCallbacks(followCardBackdrop);
+        handler.postDelayed(followCardBackdrop, 500);
         spoken.focusMoved();
     }
 
@@ -2712,10 +2721,19 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             near.addAll(cards);
             recs.details(near);
         }
-        Backdrop b = cards.isEmpty() ? null : recs.backdrop(cards.get(0));
-        if (cards.isEmpty() || b != null) showBackdrop(b);
+        updateCardBackdrop();
         heroDirty = true;
         spoken.focusMoved();    // new picks under the focused card
+    }
+
+    private void updateCardBackdrop() {
+        if (cards.isEmpty()) {
+            showBackdrop(null);
+            return;
+        }
+        Recs.Pick pick = cards.get(zone == Z_CARDS ? Math.min(cardIndex, cards.size() - 1) : 0);
+        Backdrop backdrop = recs.backdrop(pick.backdrop == null ? cards.get(0) : pick);
+        if (backdrop != null) showBackdrop(backdrop);
     }
 
     /** The tab a page of the run belongs to. */

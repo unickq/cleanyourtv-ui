@@ -985,6 +985,15 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
                         TextView button = TvUi.button(this, k, caption, v -> openWatchNext(item));
                         button.setSingleLine(true);
                         button.setEllipsize(TextUtils.TruncateAt.END);
+                        if (item.artwork != null) {
+                            int width = Math.max(1, item.artwork.getIntrinsicWidth());
+                            int height = Math.max(1, item.artwork.getIntrinsicHeight());
+                            float scale = 100 * k / Math.max(width, height);
+                            item.artwork.setBounds(0, 0, Math.max(1, Math.round(width * scale)),
+                                    Math.max(1, Math.round(height * scale)));
+                            button.setCompoundDrawablesRelative(item.artwork, null, null, null);
+                            button.setCompoundDrawablePadding(Math.round(20 * k));
+                        }
                         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                                 Math.round(980 * k), ViewGroup.LayoutParams.WRAP_CONTENT);
                         lp.topMargin = Math.round(16 * k);

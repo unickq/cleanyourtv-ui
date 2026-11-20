@@ -4,10 +4,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.ImageDecoder;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.tv.TvContract;
 import android.media.tv.TvContract.WatchNextPrograms;
 import android.net.Uri;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -29,11 +33,13 @@ final class WatchNext {
         final String title, app;
         final Intent resume;
         final int progress;
+        final Drawable artwork;
 
-        Item(String title, String app, Intent resume, long position, long duration) {
+        Item(String title, String app, Intent resume, long position, long duration, Drawable artwork) {
             this.title = title;
             this.app = app;
             this.resume = resume;
+            this.artwork = artwork;
             progress = position > 0 && position < duration ? (int) (100.0 * position / duration) : -1;
         }
     }
@@ -45,7 +51,8 @@ final class WatchNext {
                 WatchNextPrograms.COLUMN_PACKAGE_NAME, WatchNextPrograms.COLUMN_TITLE,
                 WatchNextPrograms.COLUMN_INTENT_URI, WatchNextPrograms.COLUMN_LAST_PLAYBACK_POSITION_MILLIS,
                 WatchNextPrograms.COLUMN_DURATION_MILLIS, WatchNextPrograms.COLUMN_WATCH_NEXT_TYPE,
-                WatchNextPrograms.COLUMN_BROWSABLE
+                WatchNextPrograms.COLUMN_BROWSABLE, WatchNextPrograms.COLUMN_POSTER_ART_URI,
+                WatchNextPrograms.COLUMN_THUMBNAIL_URI
         };
         Set<String> seen = new HashSet<>();
         try (Cursor cursor = context.getContentResolver().query(WatchNextPrograms.CONTENT_URI,
@@ -59,13 +66,40 @@ final class WatchNext {
                         || context.getPackageName().equals(pkg)) continue;
                 Intent resume = resumeIntent(pkg, uri);
                 if (resume == null || !seen.add(pkg + "|" + uri)) continue;
-                items.add(new Item(title, Providers.label(context, pkg), resume, cursor.getLong(3), cursor.getLong(4)));
+                Drawable artwork = localArtwork(context, cursor.getString(7));
+                if (artwork == null) artwork = localArtwork(context, cursor.getString(8));
+                if (artwork == null) {
+                    try {
+                        artwork = context.getPackageManager().getApplicationIcon(pkg);
+                    } catch (PackageManager.NameNotFoundException ignored) {
+                    }
+                }
+                items.add(new Item(title, Providers.label(context, pkg), resume,
+                        cursor.getLong(3), cursor.getLong(4), artwork));
             }
         } catch (RuntimeException e) {
             AppLog.w("Watch Next: " + e.getClass().getSimpleName());
             throw e;
         }
         return items;
+    }
+
+    private static Drawable localArtwork(Context context, String link) {
+        if (link == null) return null;
+        Uri uri = Uri.parse(link);
+        if (!"content".equals(uri.getScheme()) && !"android.resource".equals(uri.getScheme())) return null;
+        try {
+            return new BitmapDrawable(context.getResources(), ImageDecoder.decodeBitmap(
+                    ImageDecoder.createSource(context.getContentResolver(), uri),
+                    (decoder, info, source) -> {
+                        int width = info.getSize().getWidth(), height = info.getSize().getHeight();
+                        float scale = Math.min(1f, 256f / Math.max(width, height));
+                        decoder.setTargetSize(Math.max(1, Math.round(width * scale)),
+                                Math.max(1, Math.round(height * scale)));
+                    }));
+        } catch (IOException | RuntimeException ignored) {
+            return null;
+        }
     }
 
     private static Intent resumeIntent(String pkg, String uri) {
