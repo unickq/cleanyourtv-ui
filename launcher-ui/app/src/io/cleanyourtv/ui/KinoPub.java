@@ -116,20 +116,24 @@ final class KinoPub {
     static List<Tmdb.Title> watching(Context c) throws Exception {
         List<JSONObject> items = items(c, "/v1/watching/movies?subscribed=1");
         items.addAll(items(c, "/v1/watching/serials?subscribed=1"));
-        return shelfTitles(items);
+        return shelfTitles(items, false);
     }
 
-    static List<Tmdb.Title> fresh(Context c) throws Exception {
+    static List<Tmdb.Title> fresh(Context c) throws Exception { return fresh(c, false); }
+
+    static List<Tmdb.Title> fresh(Context c, boolean homeArtwork) throws Exception {
         List<JSONObject> items = items(c, "/v1/items/fresh?type=movie&perpage=20");
         items.addAll(items(c, "/v1/items/fresh?type=serial&perpage=20"));
         items.sort((a, b) -> Long.compare(b.optLong("updated_at", b.optLong("created_at")),
                 a.optLong("updated_at", a.optLong("created_at"))));
-        return shelfTitles(items);
+        return shelfTitles(items, homeArtwork);
     }
 
-    static List<Tmdb.Title> popular(Context c, boolean movies) throws Exception {
+    static List<Tmdb.Title> popular(Context c, boolean movies) throws Exception { return popular(c, movies, false); }
+
+    static List<Tmdb.Title> popular(Context c, boolean movies, boolean homeArtwork) throws Exception {
         String type = movies ? "movie" : "serial";
-        return shelfTitles(items(c, "/v1/items/popular?type=" + type + "&perpage=20"));
+        return shelfTitles(items(c, "/v1/items/popular?type=" + type + "&perpage=20"), homeArtwork);
     }
 
     private static List<JSONObject> items(Context c, String path) throws Exception {
@@ -143,22 +147,75 @@ final class KinoPub {
         return out;
     }
 
-    private static List<Tmdb.Title> shelfTitles(List<JSONObject> items) {
+    private static List<Tmdb.Title> shelfTitles(List<JSONObject> items, boolean homeArtwork) {
         List<Tmdb.Title> out = new ArrayList<>();
         Set<Integer> seen = new LinkedHashSet<>();
         for (JSONObject item : items) {
             int id = item.optInt("id");
-            String name = item.optString("title").trim();
+            String name = displayTitle(item.optString("title"));
             if (id <= 0 || name.isEmpty() || "null".equals(name) || !seen.add(id)) continue;
             JSONObject posters = item.optJSONObject("posters");
-            String poster = posters == null ? "" : posters.optString("medium");
-            if (posters != null && !poster.startsWith("http")) poster = posters.optString("small");
-            if (poster.startsWith("http://")) poster = "https://" + poster.substring(7);
-            if (!poster.startsWith("https://")) poster = "";
+            String wide = homeArtwork ? posterUrl(posters, "wide") : "";
+            String poster = homeArtwork ? posterUrl(posters, "big") : "";
+            if (poster.isEmpty()) poster = posterUrl(posters, "medium");
+            if (poster.isEmpty()) poster = posterUrl(posters, "small");
             int year = item.optInt("year");
-            out.add(new Tmdb.Title(KIND, id, name, poster, "", year > 0 ? String.valueOf(year) : "", 0));
+            Tmdb.Title title = new Tmdb.Title(KIND, id, name, poster, wide, year > 0 ? String.valueOf(year) : "", 0);
+            if (homeArtwork) {
+                boolean series = "serial".equals(item.optString("type")) || "serial".equals(item.optString("subtype"));
+                List<String> caption = new ArrayList<>();
+                caption.add(Strings.get(series ? R.string.series : R.string.movie));
+                JSONArray genres = item.optJSONArray("genres");
+                JSONObject genre = genres == null ? null : genres.optJSONObject(0);
+                String genreName = genre == null ? "" : genre.optString("title", "").trim();
+                if (!genreName.isEmpty() && !"null".equals(genreName)) caption.add(genreName);
+                if (series) {
+                    int seasons = seasonCount(item);
+                    if (seasons > 0) caption.add(Strings.quantity(R.plurals.seasons, seasons));
+                    title.kinoNeedsSeasons = seasons == 0;
+                } else {
+                    if (year > 0) caption.add(title.year);
+                    int minutes = movieMinutes(item);
+                    if (minutes > 0) caption.add(Strings.duration(minutes));
+                }
+                title.kinoCaption = String.join(" · ", caption);
+            }
+            out.add(title);
         }
         return out;
+    }
+
+    static int seasonCount(Context c, int id) throws Exception {
+        JSONObject item = request("/v1/items/" + id, null, accessToken(c)).optJSONObject("item");
+        return item == null ? 0 : seasonCount(item);
+    }
+
+    private static int seasonCount(JSONObject item) {
+        JSONArray seasons = item.optJSONArray("seasons");
+        return seasons == null ? Math.max(0, item.optInt("seasons_count")) : seasons.length();
+    }
+
+    private static int movieMinutes(JSONObject item) {
+        JSONObject duration = item.optJSONObject("duration");
+        double seconds = duration == null ? 0 : duration.optDouble("total", 0);
+        if (!Double.isFinite(seconds) || seconds <= 0 || seconds / 60 > Integer.MAX_VALUE) return 0;
+        return (int) Math.max(1, Math.round(seconds / 60));
+    }
+
+    static String displayTitle(String title) {
+        String name = title.trim();
+        int separator = name.indexOf(" / ");
+        if (separator < 0) return name;
+        String local = name.substring(0, separator).trim(), original = name.substring(separator + 3).trim();
+        if (local.isEmpty()) return original;
+        if (original.isEmpty()) return local;
+        return Ui.ru || Ui.uk ? local : original;
+    }
+
+    private static String posterUrl(JSONObject posters, String key) {
+        String url = posters == null ? "" : posters.optString(key).trim();
+        if (url.startsWith("http://")) return "https://" + url.substring(7);
+        return url.startsWith("https://") ? url : "";
     }
 
     static void open(Context c, int id) {

@@ -250,6 +250,31 @@ final class HomeApps {
         return items;
     }
 
+    static List<Item> drawerInputs(Context c) {
+        List<Item> ports = editableHdmi(c);
+        ports.removeIf(port -> Prefs.hdmiHidden(port.inputId));
+        for (Item port : ports) {
+            if (!port.inputId.equals(Prefs.liveHdmi())) continue;
+            Item live = shortcut(INPUT, "live", Strings.get(R.string.live_tv) + " · " + port.label, "tv");
+            live.inputId = port.inputId;
+            live.connected = port.connected;
+            ports.add(0, live);
+            return ports;
+        }
+        if (liveTv(c) != null) ports.add(0, shortcut(LIVE_TV, "live", Strings.get(R.string.live_tv), "tv"));
+        return ports;
+    }
+
+    static List<Item> editableHdmi(Context c) {
+        List<Item> ports = inputs(c, true);
+        List<String> order = Prefs.hdmiOrder();
+        ports.sort(java.util.Comparator.comparingInt(port -> {
+            int index = order.indexOf(port.inputId);
+            return index < 0 ? Integer.MAX_VALUE : index;
+        }));
+        return ports;
+    }
+
     private static List<Item> inputs(Context c) {
         return inputs(c, false);
     }

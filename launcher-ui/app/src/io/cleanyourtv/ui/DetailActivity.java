@@ -653,7 +653,7 @@ public class DetailActivity extends Activity {
                         String[] labels = new String[matches.size()];
                         for (int n = 0; n < labels.length; n++) {
                             JSONObject item = matches.get(n);
-                            labels[n] = item.optString("title") + " (" + item.optInt("year") + ") · "
+                            labels[n] = KinoPub.displayTitle(item.optString("title")) + " (" + item.optInt("year") + ") · "
                                     + item.optString("quality") + " · " + item.optString("voice");
                         }
                         new AlertDialog.Builder(this).setTitle(Strings.get(R.string.choose_kinopub_version))

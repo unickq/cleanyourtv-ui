@@ -102,6 +102,22 @@ final class HomeData {
         final List<Boolean> hourDay = new ArrayList<>();
     }
 
+    /** Zero means rain now; a positive value is the next rainy forecast hour. */
+    static int rainInHours(Weather weather, long now) {
+        if (isRain(weather.code)) return 0;
+        for (int i = 0; i < weather.hours.size(); i++) {
+            long ahead = weather.hours.get(i) - now;
+            if (ahead > 0 && isRain(weather.hourCode.get(i))) {
+                return (int) ((ahead + 3_599_999) / 3_600_000);
+            }
+        }
+        return -1;
+    }
+
+    private static boolean isRain(int code) {
+        return (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99);
+    }
+
     private static HomeData instance;
 
     static synchronized HomeData get(Context c) {

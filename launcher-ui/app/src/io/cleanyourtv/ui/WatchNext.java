@@ -74,6 +74,7 @@ final class WatchNext {
                     } catch (PackageManager.NameNotFoundException ignored) {
                     }
                 }
+                if (KinoPub.PLAYER_PACKAGE.equals(pkg)) title = KinoPub.displayTitle(title);
                 items.add(new Item(title, Providers.label(context, pkg), resume,
                         cursor.getLong(3), cursor.getLong(4), artwork));
             }

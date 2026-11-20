@@ -184,4 +184,9 @@
     <string name="watch_next_allow">Permitir acceso a la lista de reproducción</string>
     <string name="watch_next_empty">Ninguna aplicación ha compartido contenido para seguir viendo.</string>
     <string name="watch_next_unavailable">La lista de reproducción de Android TV no está disponible.</string>
+    <string name="rain_now">Está lloviendo</string>
+    <string name="rain_in_hours">Lluvia en %1$d h</string>
+    <string name="no_hdmi_inputs">No se encontraron entradas HDMI</string>
+    <string name="use_hdmi_for_live_tv">Abrir esta entrada HDMI desde TV en directo</string>
+    <string name="restore_live_tv">Restaurar TV en directo</string>
 </resources>

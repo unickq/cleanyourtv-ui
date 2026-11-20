@@ -419,4 +419,9 @@
     <string name="watch_next_allow">Дозволити доступ до списку перегляду</string>
     <string name="watch_next_empty">Застосунки ще не додали нічого для продовження перегляду.</string>
     <string name="watch_next_unavailable">Список перегляду Android TV недоступний.</string>
+    <string name="rain_now">Дощ зараз</string>
+    <string name="rain_in_hours">Дощ через %1$d год</string>
+    <string name="no_hdmi_inputs">Входів HDMI не знайдено</string>
+    <string name="use_hdmi_for_live_tv">Відкривати цей HDMI через «Прямий ефір»</string>
+    <string name="restore_live_tv">Відновити прямий ефір</string>
 </resources>

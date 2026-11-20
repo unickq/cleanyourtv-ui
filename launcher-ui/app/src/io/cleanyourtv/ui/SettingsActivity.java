@@ -115,7 +115,7 @@ public class SettingsActivity extends Activity {
 
     static final class SettingsView extends View implements Choreographer.FrameCallback {
         private static final int MAIN = 0, HOME_SETTINGS = 2, REMOTE_KEYS = 3, PICKER = 4, SHELF_EDIT = 5;
-        private static final float LIST_ROW_H = 68, LIST_ROW_GAP = 6;
+        private static final float LIST_ROW_H = 68, LIST_ROW_GAP = 6, HOME_ROW_H = 62, HOME_ROW_STEP = 67;
         private static final int PICK_VISIBLE = 9;
         private static final float LIST_X = 1000, LIST_R = 1824, LIST_TOP = 186, ROW_H = 74, ROW_GAP = 8;
         private static final int AMBER = 0xFFFFC266, INK = 0xFF1C1C1E;
@@ -232,8 +232,8 @@ public class SettingsActivity extends Activity {
                 top = LIST_TOP + row * (ROW_H + ROW_GAP);
                 height = ROW_H;
             } else {
-                top = LIST_TOP + 20 + row * (LIST_ROW_H + LIST_ROW_GAP);
-                height = LIST_ROW_H;
+                top = LIST_TOP + 20 + row * (screen == HOME_SETTINGS ? HOME_ROW_STEP : LIST_ROW_H + LIST_ROW_GAP);
+                height = screen == HOME_SETTINGS ? HOME_ROW_H : LIST_ROW_H;
             }
             focusBox.set(LIST_X * k, top * k, LIST_R * k, (top + height) * k);
             return focusBox;
@@ -522,6 +522,7 @@ public class SettingsActivity extends Activity {
             l.add("Ethereum");
             l.add("Solana");
             if (dollar()) l.add(Strings.get(R.string.dollar));
+            l.add(Strings.get(R.string.hdmi_inputs));
             return l.toArray(new String[0]);
         }
 
@@ -544,7 +545,8 @@ public class SettingsActivity extends Activity {
             v[CITY_ROW] = !cityStatus.isEmpty() ? cityStatus : Prefs.city().isEmpty() ? "—" : Prefs.city();
             v[QUOTES_ROW] = onOff(Prefs.quotes());
             // No quotes widget, nowhere to show prices: the coins read as off (and stay locked) until it is back on.
-            for (int i = COIN_ROWS; i < v.length; i++) v[i] = onOff(Prefs.quotes() && Prefs.coin(i - COIN_ROWS));
+            for (int i = COIN_ROWS; i < v.length - 1; i++) v[i] = onOff(Prefs.quotes() && Prefs.coin(i - COIN_ROWS));
+            v[v.length - 1] = "›";
             return v;
         }
 
@@ -603,6 +605,7 @@ public class SettingsActivity extends Activity {
                 Prefs.setButton(b.id, appPkgs.get(next));
                 return;
             }
+            if (focus == settingLabels().length - 1) return;
             switch (focus) {
                 case 0: {
                     int at = java.util.Arrays.asList(LANGUAGES).indexOf(Prefs.language());
@@ -633,6 +636,67 @@ public class SettingsActivity extends Activity {
                     break;
             }
             HomeData.get(getContext()).settingsChanged();
+        }
+
+        private void editHdmiInputs(int selected) {
+            List<HomeApps.Item> ports = HomeApps.editableHdmi(activity);
+            AlertDialog.Builder dialog = new AlertDialog.Builder(activity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    .setTitle(Strings.get(R.string.hdmi_inputs))
+                    .setNegativeButton(Strings.get(R.string.close), null);
+            if (ports.isEmpty()) {
+                dialog.setMessage(Strings.get(R.string.no_hdmi_inputs)).show();
+                return;
+            }
+            String[] labels = new String[ports.size()];
+            for (int i = 0; i < ports.size(); i++) {
+                HomeApps.Item port = ports.get(i);
+                labels[i] = port.label + (Prefs.hdmiHidden(port.inputId) ? " · " + Strings.get(R.string.hidden) : "")
+                        + (port.inputId.equals(Prefs.liveHdmi()) ? " · " + Strings.get(R.string.live_tv) : "");
+            }
+            AlertDialog shown = dialog.setItems(labels, (d, which) -> editHdmiPort(ports, which)).show();
+            shown.getListView().setSelection(selected);
+        }
+
+        private void editHdmiPort(List<HomeApps.Item> ports, int index) {
+            HomeApps.Item port = ports.get(index);
+            boolean hidden = Prefs.hdmiHidden(port.inputId), live = port.inputId.equals(Prefs.liveHdmi());
+            List<String> labels = new ArrayList<>();
+            List<Runnable> actions = new ArrayList<>();
+            labels.add(Strings.get(hidden ? R.string.show_in_the_menu : R.string.hide_2));
+            actions.add(() -> {
+                Prefs.setHdmiHidden(port.inputId, !hidden);
+                editHdmiInputs(index);
+            });
+            if (index > 0) {
+                labels.add(Strings.get(R.string.move_up));
+                actions.add(() -> moveHdmiPort(ports, index, index - 1));
+            }
+            if (index + 1 < ports.size()) {
+                labels.add(Strings.get(R.string.move_down));
+                actions.add(() -> moveHdmiPort(ports, index, index + 1));
+            }
+            if (!hidden || live) {
+                labels.add(Strings.get(live ? R.string.restore_live_tv : R.string.use_hdmi_for_live_tv));
+                actions.add(() -> {
+                    Prefs.setLiveHdmi(live ? "" : port.inputId);
+                    editHdmiInputs(index);
+                });
+            }
+            new AlertDialog.Builder(activity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    .setTitle(port.label)
+                    .setItems(labels.toArray(new String[0]), (d, option) -> actions.get(option).run())
+                    .setNegativeButton(Strings.get(R.string.cancel), (d, which) -> editHdmiInputs(index))
+                    .setOnCancelListener(d -> editHdmiInputs(index))
+                    .show();
+        }
+
+        private void moveHdmiPort(List<HomeApps.Item> ports, int from, int to) {
+            java.util.Collections.swap(ports, from, to);
+            List<String> ids = new ArrayList<>();
+            for (HomeApps.Item port : ports) ids.add(port.inputId);
+            for (String previous : Prefs.hdmiOrder()) if (!previous.isEmpty() && !ids.contains(previous)) ids.add(previous);
+            Prefs.setHdmiOrder(ids);
+            editHdmiInputs(to);
         }
 
         private void askCity() {
@@ -858,11 +922,11 @@ public class SettingsActivity extends Activity {
             Paint heading = Ui.text(Ui.displaySemibold, 34 * k, 0xFFFFFFFF);
             c.drawText(Strings.get(R.string.home_settings), LIST_X * k + 30 * k, (LIST_TOP - 24) * k, heading);
             for (int i = 0; i < labels.length; i++) {
-                float y = (LIST_TOP + 20 + i * (LIST_ROW_H + LIST_ROW_GAP)) * k;
-                rowRect.set(LIST_X * k, y, LIST_R * k, y + LIST_ROW_H * k);
+                float y = (LIST_TOP + 20 + i * HOME_ROW_STEP) * k;
+                rowRect.set(LIST_X * k, y, LIST_R * k, y + HOME_ROW_H * k);
                 float f = drawRowBackground(c, i);
                 rowLabel.setColor(blend(0xF2FFFFFF, INK, f));
-                boolean locked = i >= COIN_ROWS && !Prefs.quotes();
+                boolean locked = i >= COIN_ROWS && i < labels.length - 1 && !Prefs.quotes();
                 rowValue.setColor(blend(locked ? 0x59FFFFFF : 0xB3FFFFFF, locked ? 0x591C1C1E : 0xB31C1C1E, f));
                 if (locked) rowLabel.setColor(blend(0x73FFFFFF, 0x731C1C1E, f));
                 float base = rowRect.centerY() + Ui.halfCap(rowLabel);
@@ -870,7 +934,7 @@ public class SettingsActivity extends Activity {
                 c.drawText(values[i], rowRect.right - 30 * k, base, rowValue);
             }
             Paint hint = Ui.text(Ui.regular, 23 * k, 0x8CFFFFFF);
-            float hy = (LIST_TOP + 20 + labels.length * (LIST_ROW_H + LIST_ROW_GAP) + 36) * k;
+            float hy = (LIST_TOP + 20 + labels.length * HOME_ROW_STEP + 36) * k;
             c.drawText(Strings.get(R.string.ok_or_the_arrows_change_the_value), LIST_X * k + 30 * k, hy, hint);
         }
 
@@ -922,6 +986,9 @@ public class SettingsActivity extends Activity {
                 return;
             } else if (screen == REMOTE_KEYS) {
                 openPicker(keysScroll + focus + 1);
+            } else if (screen == HOME_SETTINGS && focus == settingLabels().length - 1) {
+                editHdmiInputs(0);
+                return;
             } else if (screen == HOME_SETTINGS && focus == CITY_ROW) {
                 askCity();
                 return;

@@ -242,6 +242,8 @@ final class Tmdb {
         final String name, poster, backdrop, year;
         final double vote;
         String overview = "", lang = "", date = "";
+        String kinoCaption = "";
+        boolean kinoNeedsSeasons;
         int[] genres = new int[0];
 
         Title(String kind, int id, String name, String poster, String backdrop, String year, double vote) {

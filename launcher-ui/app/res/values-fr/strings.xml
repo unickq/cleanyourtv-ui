@@ -404,4 +404,9 @@
     <string name="watch_next_allow">Autoriser l’accès à la liste de lecture</string>
     <string name="watch_next_empty">Aucune application n’a encore partagé de contenu à reprendre.</string>
     <string name="watch_next_unavailable">La liste de lecture Android TV est indisponible.</string>
+    <string name="rain_now">Pluie en cours</string>
+    <string name="rain_in_hours">Pluie dans %1$d h</string>
+    <string name="no_hdmi_inputs">Aucune entrée HDMI trouvée</string>
+    <string name="use_hdmi_for_live_tv">Ouvrir cette entrée HDMI depuis TV en direct</string>
+    <string name="restore_live_tv">Rétablir la TV en direct</string>
 </resources>

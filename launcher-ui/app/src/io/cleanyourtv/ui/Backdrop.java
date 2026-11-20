@@ -54,17 +54,21 @@ final class Backdrop {
         nightImage = night == null ? null : Bitmap.createBitmap(night, FW, FH, Bitmap.Config.ARGB_8888);
     }
 
-    static Backdrop make(Bitmap src, boolean forLight) {
+    static Backdrop make(Bitmap src, boolean forLight, Bitmap poster) {
         Bitmap out = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(out);
         Paint photo = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG);
         float scale = Math.max((float) W / src.getWidth(), (float) H / src.getHeight());
         float sw = src.getWidth() * scale, sh = src.getHeight() * scale;
         c.drawBitmap(src, null, new RectF((W - sw) / 2, (H - sh) / 2, (W + sw) / 2, (H + sh) / 2), photo);
+        Bitmap widePoster = forLight && poster == src && src.getHeight() > src.getWidth() ? widePoster(src, photo) : null;
+        Bitmap tallPoster = forLight && poster != null ? card(poster, TALL_W, TALL_H) : null;
+        if (poster != null && poster != src) poster.recycle();
         src.recycle();
         if (forLight) {
             // Light design: everything comes from the photo without scrims.
-            Bitmap wide = card(out, WIDE_W, WIDE_H), tall = card(out, TALL_W, TALL_H);
+            Bitmap wide = widePoster != null ? widePoster : card(out, WIDE_W, WIDE_H);
+            Bitmap tall = tallPoster != null ? tallPoster : card(out, TALL_W, TALL_H);
             int[] frost = reduce(out, FW, FH, 3, 3);
             int[] light = whiten(frost.clone(), 0.82f);
             int[] glass = GLASS ? reduce(out, GW, GH, 2, 2) : null;
@@ -146,6 +150,21 @@ final class Backdrop {
         return new Bitmap[] {out, frost};
     }
 
+    /** Fit a portrait cover within the wide card, with its own soft colors filling the sides. */
+    private static Bitmap widePoster(Bitmap src, Paint photo) {
+        Bitmap wide = Bitmap.createBitmap(WIDE_W, WIDE_H, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(wide);
+        Bitmap colors = Bitmap.createScaledBitmap(src, 8, 8, true);
+        canvas.drawBitmap(colors, null, new RectF(0, 0, WIDE_W, WIDE_H), photo);
+        if (colors != src) colors.recycle();
+        canvas.drawColor(0x33000000);
+        float scale = Math.min((float) WIDE_W / src.getWidth(), (float) WIDE_H / src.getHeight());
+        float halfWidth = src.getWidth() * scale / 2, halfHeight = src.getHeight() * scale / 2;
+        float x = WIDE_W / 2f, y = WIDE_H / 2f;
+        canvas.drawBitmap(src, null, new RectF(x - halfWidth, y - halfHeight, x + halfWidth, y + halfHeight), photo);
+        return gpu(wide);
+    }
+
     /** Crop from the top so wide cards retain titles and faces near the upper edge. */
     private static Bitmap card(Bitmap full, int w, int h) {
         float ratio = (float) w / h;
@@ -159,7 +178,7 @@ final class Backdrop {
         }
         Bitmap out = Bitmap.createScaledBitmap(b, w, h, true);
         if (b != full && b != out) b.recycle();
-        return gpu(out);
+        return gpu(out == full ? out.copy(Bitmap.Config.ARGB_8888, false) : out);
     }
 
     /** Copies it to GPU memory (cheap to draw; the process doesn't keep the pixels). */

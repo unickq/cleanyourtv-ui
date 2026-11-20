@@ -412,4 +412,9 @@
     <string name="watch_next_allow">מתן גישה לרשימת הצפייה</string>
     <string name="watch_next_empty">אף אפליקציה עדיין לא שיתפה תוכן להמשך צפייה.</string>
     <string name="watch_next_unavailable">רשימת הצפייה של Android TV אינה זמינה.</string>
+    <string name="rain_now">יורד גשם עכשיו</string>
+    <string name="rain_in_hours">גשם בעוד %1$d ש׳</string>
+    <string name="no_hdmi_inputs">לא נמצאו כניסות HDMI</string>
+    <string name="use_hdmi_for_live_tv">פתיחת כניסת HDMI זו מטלוויזיה בשידור חי</string>
+    <string name="restore_live_tv">שחזור טלוויזיה בשידור חי</string>
 </resources>

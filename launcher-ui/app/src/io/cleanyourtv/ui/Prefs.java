@@ -199,6 +199,17 @@ final class Prefs {
         put("shelf", sb.toString());
     }
 
+    static List<String> hdmiOrder() {
+        return java.util.Arrays.asList(sp().getString("hdmiOrder", "").split(","));
+    }
+
+    static void setHdmiOrder(List<String> ids) { put("hdmiOrder", String.join(",", ids)); }
+
+    static boolean hdmiHidden(String id) { return sp().getBoolean("hdmiHidden." + id, false); }
+    static void setHdmiHidden(String id, boolean hidden) { put("hdmiHidden." + id, hidden); }
+    static String liveHdmi() { return sp().getString("liveHdmi", ""); }
+    static void setLiveHdmi(String id) { put("liveHdmi", id); }
+
     // MARK: - Hidden apps
 
     /** Packages kept out of All Apps (config.json "hidden_apps"), on top of HomeApps' own list. */

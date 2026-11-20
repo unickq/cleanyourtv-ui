@@ -183,4 +183,9 @@
     <string name="watch_next_allow">Zugriff auf die Wiedergabeliste erlauben</string>
     <string name="watch_next_empty">Noch keine App hat Inhalte zum Weiterschauen geteilt.</string>
     <string name="watch_next_unavailable">Die Android-TV-Wiedergabeliste ist nicht verfügbar.</string>
+    <string name="rain_now">Jetzt Regen</string>
+    <string name="rain_in_hours">Regen in %1$d Std.</string>
+    <string name="no_hdmi_inputs">Keine HDMI-Eingänge gefunden</string>
+    <string name="use_hdmi_for_live_tv">Diesen HDMI-Eingang über Live-TV öffnen</string>
+    <string name="restore_live_tv">Live-TV wiederherstellen</string>
 </resources>

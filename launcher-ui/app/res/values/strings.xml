@@ -554,4 +554,9 @@
     <string name="watch_next_allow">Allow access to Continue Watching</string>
     <string name="watch_next_empty">No apps have shared anything to continue watching yet.</string>
     <string name="watch_next_unavailable">The Android TV viewing list is unavailable.</string>
+    <string name="rain_now">Rain now</string>
+    <string name="rain_in_hours">Rain in %1$d h</string>
+    <string name="no_hdmi_inputs">No HDMI inputs found</string>
+    <string name="use_hdmi_for_live_tv">Open this HDMI input from Live TV</string>
+    <string name="restore_live_tv">Restore Live TV</string>
 </resources>
