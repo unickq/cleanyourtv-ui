@@ -71,6 +71,10 @@
     <string name="couldnt_open_this_title_prefix">"Не удалось открыть карточку: "</string>
     <string name="couldnt_open_tv_settings">"Не удалось открыть настройки телевизора"</string>
     <string name="couldnt_save_prefix">"Не удалось сохранить: "</string>
+    <string name="kinopub_fresh">"Новинки KinoPub"</string>
+    <string name="kinopub_watching">"Я смотрю"</string>
+    <string name="kinopub_popular_movies">"Популярные фильмы"</string>
+    <string name="kinopub_popular_shows">"Популярные сериалы"</string>
     <string name="kinopub_session_save_failed">"Не удалось сохранить сеанс KinoPub. Вернитесь назад и попробуйте ещё раз."</string>
     <string name="couldnt_save_the_rating_prefix">"Не удалось сохранить оценку: "</string>
     <string name="couldnt_search_now_prefix">"Не удалось выполнить поиск: "</string>

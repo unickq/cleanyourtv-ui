@@ -350,6 +350,10 @@
     <string name="youtube_button">"Botão YouTube"</string>
 
     <string name="count_from_tmdb">%1$s · dados do TMDB</string>
+    <string name="kinopub_fresh">"Novidades do KinoPub"</string>
+    <string name="kinopub_watching">"Estou assistindo"</string>
+    <string name="kinopub_popular_movies">"Filmes populares"</string>
+    <string name="kinopub_popular_shows">"Séries populares"</string>
     <plurals name="titles">
         <item quantity="one">%1$d título</item>
         <item quantity="other">%1$d títulos</item>

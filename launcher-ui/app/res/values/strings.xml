@@ -82,6 +82,10 @@
     <string name="couldnt_open_this_title_prefix">"Couldn\'t open this title: "</string>
     <string name="couldnt_open_tv_settings">"Couldn\'t open TV Settings"</string>
     <string name="couldnt_save_prefix">"Couldn\'t save: "</string>
+    <string name="kinopub_fresh">"New on KinoPub"</string>
+    <string name="kinopub_watching">"Watching"</string>
+    <string name="kinopub_popular_movies">"Popular movies"</string>
+    <string name="kinopub_popular_shows">"Popular shows"</string>
     <string name="kinopub_session_save_failed">"Couldn\'t save the KinoPub session. Go back and try again."</string>
     <string name="couldnt_save_the_rating_prefix">"Couldn\'t save the rating: "</string>
     <string name="couldnt_search_now_prefix">"Couldn\'t search now: "</string>

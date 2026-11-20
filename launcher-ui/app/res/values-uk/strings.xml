@@ -61,6 +61,10 @@
     <string name="couldnt_open_this_person_prefix">"Не вдалося відкрити сторінку людини: "</string>
     <string name="couldnt_open_this_title_prefix">"Не вдалося відкрити картку: "</string>
     <string name="couldnt_save_prefix">"Не вдалося зберегти: "</string>
+    <string name="kinopub_fresh">"Новинки KinoPub"</string>
+    <string name="kinopub_watching">"Я дивлюся"</string>
+    <string name="kinopub_popular_movies">"Популярні фільми"</string>
+    <string name="kinopub_popular_shows">"Популярні серіали"</string>
     <string name="kinopub_session_save_failed">"Не вдалося зберегти сеанс KinoPub. Поверніться й спробуйте ще раз."</string>
     <string name="couldnt_save_the_rating_prefix">"Не вдалося зберегти оцінку: "</string>
     <string name="couldnt_search_now_prefix">"Не вдалося виконати пошук: "</string>

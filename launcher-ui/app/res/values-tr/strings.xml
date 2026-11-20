@@ -462,6 +462,10 @@
     <string name="youtube_prime_video_and_google_play_the_tv_itself_controls_those_buttons">"YouTube, Prime Video ve Google Play: bu tuşları TV\'nin kendisi yönetir."</string>
 
     <string name="count_from_tmdb">%1$s · TMDB verileri</string>
+    <string name="kinopub_fresh">"KinoPub yenilikleri"</string>
+    <string name="kinopub_watching">"İzliyorum"</string>
+    <string name="kinopub_popular_movies">"Popüler filmler"</string>
+    <string name="kinopub_popular_shows">"Popüler diziler"</string>
     <plurals name="titles">
         <item quantity="one">%1$d başlık</item>
         <item quantity="other">%1$d başlık</item>

@@ -376,6 +376,10 @@
     <string name="youtube_prime_video_and_google_play_the_tv_itself_controls_those_buttons">"הכפתורים של YouTube, ‏Prime Video ו־Google Play: הטלוויזיה עצמה שולטת בהם."</string>
 
     <string name="count_from_tmdb">%1$s · נתוני TMDB</string>
+    <string name="kinopub_fresh">"חדש ב-KinoPub"</string>
+    <string name="kinopub_watching">"בצפייה"</string>
+    <string name="kinopub_popular_movies">"סרטים פופולריים"</string>
+    <string name="kinopub_popular_shows">"סדרות פופולריות"</string>
     <plurals name="titles">
         <item quantity="one">%1$d כותר</item>
         <item quantity="other">%1$d כותרים</item>

@@ -368,6 +368,10 @@
     <string name="youtube_prime_video_and_google_play_the_tv_itself_controls_those_buttons">"YouTube, Prime Video et Google Play : la TV gère elle-même ces boutons."</string>
 
     <string name="count_from_tmdb">%1$s · données TMDB</string>
+    <string name="kinopub_fresh">"Nouveautés KinoPub"</string>
+    <string name="kinopub_watching">"En cours de visionnage"</string>
+    <string name="kinopub_popular_movies">"Films populaires"</string>
+    <string name="kinopub_popular_shows">"Séries populaires"</string>
     <plurals name="titles">
         <item quantity="one">%1$d titre</item>
         <item quantity="other">%1$d titres</item>

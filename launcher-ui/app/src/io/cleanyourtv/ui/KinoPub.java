@@ -19,10 +19,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** On-demand lookup; account tokens stay in this app's private preferences. */
+/** Catalog and title lookup; account tokens stay in this app's private preferences. */
 final class KinoPub {
     private KinoPub() {}
     static final String PLAYER_PACKAGE = "watch.kino";
+    static final String KIND = "kinopub";
     private static final String API = "https://api.service-kp.com";
     // Public Kodi-client identity, also used by Neoniklain/kino-history-channel (Prefs.java).
     private static final String CLIENT_ID = "xbmc";
@@ -110,6 +111,54 @@ final class KinoPub {
             }
         }
         return new ArrayList<>(found.values());
+    }
+
+    static List<Tmdb.Title> watching(Context c) throws Exception {
+        List<JSONObject> items = items(c, "/v1/watching/movies?subscribed=1");
+        items.addAll(items(c, "/v1/watching/serials?subscribed=1"));
+        return shelfTitles(items);
+    }
+
+    static List<Tmdb.Title> fresh(Context c) throws Exception {
+        List<JSONObject> items = items(c, "/v1/items/fresh?type=movie&perpage=20");
+        items.addAll(items(c, "/v1/items/fresh?type=serial&perpage=20"));
+        items.sort((a, b) -> Long.compare(b.optLong("updated_at", b.optLong("created_at")),
+                a.optLong("updated_at", a.optLong("created_at"))));
+        return shelfTitles(items);
+    }
+
+    static List<Tmdb.Title> popular(Context c, boolean movies) throws Exception {
+        String type = movies ? "movie" : "serial";
+        return shelfTitles(items(c, "/v1/items/popular?type=" + type + "&perpage=20"));
+    }
+
+    private static List<JSONObject> items(Context c, String path) throws Exception {
+        JSONArray items = request(path, null, accessToken(c)).optJSONArray("items");
+        if (items == null) throw new IOException("Unexpected KinoPub list response");
+        List<JSONObject> out = new ArrayList<>();
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject item = items.optJSONObject(i);
+            if (item != null) out.add(item);
+        }
+        return out;
+    }
+
+    private static List<Tmdb.Title> shelfTitles(List<JSONObject> items) {
+        List<Tmdb.Title> out = new ArrayList<>();
+        Set<Integer> seen = new LinkedHashSet<>();
+        for (JSONObject item : items) {
+            int id = item.optInt("id");
+            String name = item.optString("title").trim();
+            if (id <= 0 || name.isEmpty() || "null".equals(name) || !seen.add(id)) continue;
+            JSONObject posters = item.optJSONObject("posters");
+            String poster = posters == null ? "" : posters.optString("medium");
+            if (posters != null && !poster.startsWith("http")) poster = posters.optString("small");
+            if (poster.startsWith("http://")) poster = "https://" + poster.substring(7);
+            if (!poster.startsWith("https://")) poster = "";
+            int year = item.optInt("year");
+            out.add(new Tmdb.Title(KIND, id, name, poster, "", year > 0 ? String.valueOf(year) : "", 0));
+        }
+        return out;
     }
 
     static void open(Context c, int id) {

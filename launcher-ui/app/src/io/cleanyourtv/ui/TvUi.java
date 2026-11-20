@@ -233,7 +233,9 @@ final class TvUi {
         fallback.setPadding(Math.round(14 * k), 0, Math.round(14 * k), 0);
         card.addView(fallback, 0, new FrameLayout.LayoutParams(w, h));
         if (t.kind.equals("movie") || t.kind.equals("tv")) card.addView(seenBadge(a, k), badgeParams(k));
-        Images.load(img, t.poster.isEmpty() ? null : (t.kind.equals("person") ? Tmdb.PROFILE : Tmdb.POSTER) + t.poster);
+        String poster = KinoPub.KIND.equals(t.kind) ? t.poster
+                : (t.kind.equals("person") ? Tmdb.PROFILE : Tmdb.POSTER) + t.poster;
+        Images.load(img, t.poster.isEmpty() ? null : poster);
         card.setContentDescription(t.name + (t.year.isEmpty() ? "" : ", " + t.year));
         card.setOnClickListener(v -> open.open(t));
         if (t.kind.equals("movie") || t.kind.equals("tv")) {   // hold OK: seen, My list, favorites, lists

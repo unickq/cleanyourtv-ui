@@ -111,17 +111,6 @@ final class Providers {
         return "off".equals(Prefs.provider(String.valueOf(id)));
     }
 
-    /** The services Explore and the picks use: the ones with an app, or all but the turned-off ones. */
-    static List<Provider> usable(Context c) throws Exception {
-        List<Provider> out = new ArrayList<>();
-        boolean all = Prefs.showAllProviders();
-        for (Provider p : region()) {
-            if (off(p.id)) continue;
-            if (all || app(c, p.id, p.name) != null) out.add(p);
-        }
-        return out;
-    }
-
     static boolean installed(Context c, String pkg) {
         return pkg != null && HomeApps.launchIntent(c.getPackageManager(), pkg) != null;
     }

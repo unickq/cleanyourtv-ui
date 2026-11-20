@@ -147,6 +147,10 @@
 
     <string name="count_from_tmdb">%1$s · Daten von TMDB</string>
     <string name="hide_purchases">"Kaufangebote ausblenden"</string>
+    <string name="kinopub_fresh">"Neu bei KinoPub"</string>
+    <string name="kinopub_watching">"Schaue ich"</string>
+    <string name="kinopub_popular_movies">"Beliebte Filme"</string>
+    <string name="kinopub_popular_shows">"Beliebte Serien"</string>
     <plurals name="titles">
         <item quantity="one">%1$d Titel</item>
         <item quantity="other">%1$d Titel</item>
