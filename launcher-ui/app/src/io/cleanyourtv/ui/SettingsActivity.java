@@ -115,7 +115,7 @@ public class SettingsActivity extends Activity {
 
     static final class SettingsView extends View implements Choreographer.FrameCallback {
         private static final int MAIN = 0, HOME_SETTINGS = 2, REMOTE_KEYS = 3, PICKER = 4, SHELF_EDIT = 5;
-        private static final float LIST_ROW_H = 68, LIST_ROW_GAP = 6, HOME_ROW_H = 62, HOME_ROW_STEP = 67;
+        private static final float LIST_ROW_H = 68, LIST_ROW_GAP = 6, HOME_ROW_H = 57, HOME_ROW_STEP = 62;
         private static final int PICK_VISIBLE = 9;
         private static final float LIST_X = 1000, LIST_R = 1824, LIST_TOP = 186, ROW_H = 74, ROW_GAP = 8;
         private static final int AMBER = 0xFFFFC266, INK = 0xFF1C1C1E;
@@ -123,7 +123,7 @@ public class SettingsActivity extends Activity {
         private final SettingsActivity activity;
         private final Scene scene = new Scene();
         private final Handler handler = new Handler(Looper.getMainLooper());
-        private final Spring[] pop = new Spring[12];
+        private final Spring[] pop = new Spring[13];
         private final List<String> appPkgs = new ArrayList<>(), appLabels = new ArrayList<>();
         // The list picker (the app of a remote button): what it shows, which one is in use, where we are.
         private final List<String> pickLabels = new ArrayList<>();
@@ -522,6 +522,7 @@ public class SettingsActivity extends Activity {
             l.add("Ethereum");
             l.add("Solana");
             if (dollar()) l.add(Strings.get(R.string.dollar));
+            l.add(Strings.get(R.string.my_quotes));
             l.add(Strings.get(R.string.hdmi_inputs));
             return l.toArray(new String[0]);
         }
@@ -545,8 +546,8 @@ public class SettingsActivity extends Activity {
             v[CITY_ROW] = !cityStatus.isEmpty() ? cityStatus : Prefs.city().isEmpty() ? "—" : Prefs.city();
             v[QUOTES_ROW] = onOff(Prefs.quotes());
             // No quotes widget, nowhere to show prices: the coins read as off (and stay locked) until it is back on.
-            for (int i = COIN_ROWS; i < v.length - 1; i++) v[i] = onOff(Prefs.quotes() && Prefs.coin(i - COIN_ROWS));
-            v[v.length - 1] = "›";
+            for (int i = COIN_ROWS; i < v.length - 2; i++) v[i] = onOff(Prefs.quotes() && Prefs.coin(i - COIN_ROWS));
+            v[v.length - 2] = v[v.length - 1] = "›";
             return v;
         }
 
@@ -605,7 +606,7 @@ public class SettingsActivity extends Activity {
                 Prefs.setButton(b.id, appPkgs.get(next));
                 return;
             }
-            if (focus == settingLabels().length - 1) return;
+            if (focus >= settingLabels().length - 2) return;
             switch (focus) {
                 case 0: {
                     int at = java.util.Arrays.asList(LANGUAGES).indexOf(Prefs.language());
@@ -636,6 +637,57 @@ public class SettingsActivity extends Activity {
                     break;
             }
             HomeData.get(getContext()).settingsChanged();
+        }
+
+        private void editQuotes() {
+            List<String> pairs = Prefs.fxPairs();
+            List<String> rows = new ArrayList<>(pairs);
+            if (pairs.size() < Prefs.MAX_FX_PAIRS) rows.add(Strings.get(R.string.add_currency_pair));
+            new AlertDialog.Builder(activity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    .setTitle(Strings.get(R.string.my_quotes))
+                    .setItems(rows.toArray(new String[0]), (dialog, which) -> {
+                        if (which == pairs.size()) {
+                            addCurrencyPair(pairs);
+                        } else {
+                            String pair = pairs.get(which);
+                            new AlertDialog.Builder(activity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                                    .setTitle(pair)
+                                    .setPositiveButton(Strings.get(R.string.remove_2), (confirm, button) -> {
+                                        pairs.remove(pair);
+                                        Prefs.setFxPairs(pairs);
+                                        editQuotes();
+                                    })
+                                    .setNegativeButton(Strings.get(R.string.cancel), (confirm, button) -> editQuotes())
+                                    .show();
+                        }
+                    })
+                    .setNegativeButton(Strings.get(R.string.close), null)
+                    .show();
+        }
+
+        private void addCurrencyPair(List<String> pairs) {
+            EditText field = new EditText(activity);
+            field.setSingleLine(true);
+            field.setHint("EUR/RON");
+            AlertDialog dialog = new AlertDialog.Builder(activity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    .setTitle(Strings.get(R.string.add_currency_pair))
+                    .setView(field)
+                    .setPositiveButton(Strings.get(R.string.save), null)
+                    .setNegativeButton(Strings.get(R.string.cancel), (d, which) -> editQuotes())
+                    .create();
+            dialog.show();
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                String pair = HomeData.normalizeFxPair(field.getText().toString());
+                if (pair == null || pairs.contains(pair)) {
+                    field.setError(Strings.get(pair == null ? R.string.invalid_currency_pair : R.string.duplicate_currency_pair));
+                    return;
+                }
+                pairs.add(pair);
+                Prefs.setFxPairs(pairs);
+                Prefs.setQuotes(true);
+                dialog.dismiss();
+                editQuotes();
+            });
         }
 
         private void editHdmiInputs(int selected) {
@@ -926,7 +978,7 @@ public class SettingsActivity extends Activity {
                 rowRect.set(LIST_X * k, y, LIST_R * k, y + HOME_ROW_H * k);
                 float f = drawRowBackground(c, i);
                 rowLabel.setColor(blend(0xF2FFFFFF, INK, f));
-                boolean locked = i >= COIN_ROWS && i < labels.length - 1 && !Prefs.quotes();
+                boolean locked = i >= COIN_ROWS && i < labels.length - 2 && !Prefs.quotes();
                 rowValue.setColor(blend(locked ? 0x59FFFFFF : 0xB3FFFFFF, locked ? 0x591C1C1E : 0xB31C1C1E, f));
                 if (locked) rowLabel.setColor(blend(0x73FFFFFF, 0x731C1C1E, f));
                 float base = rowRect.centerY() + Ui.halfCap(rowLabel);
@@ -986,6 +1038,9 @@ public class SettingsActivity extends Activity {
                 return;
             } else if (screen == REMOTE_KEYS) {
                 openPicker(keysScroll + focus + 1);
+            } else if (screen == HOME_SETTINGS && focus == settingLabels().length - 2) {
+                editQuotes();
+                return;
             } else if (screen == HOME_SETTINGS && focus == settingLabels().length - 1) {
                 editHdmiInputs(0);
                 return;

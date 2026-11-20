@@ -559,4 +559,8 @@
     <string name="no_hdmi_inputs">No HDMI inputs found</string>
     <string name="use_hdmi_for_live_tv">Open this HDMI input from Live TV</string>
     <string name="restore_live_tv">Restore Live TV</string>
+    <string name="my_quotes">My quotes</string>
+    <string name="add_currency_pair">Add currency pair</string>
+    <string name="invalid_currency_pair">Enter a currency pair like EUR/RON.</string>
+    <string name="duplicate_currency_pair">This pair is already on the list.</string>
 </resources>

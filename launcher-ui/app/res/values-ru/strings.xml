@@ -487,4 +487,8 @@
     <string name="no_hdmi_inputs">Входы HDMI не найдены</string>
     <string name="use_hdmi_for_live_tv">Открывать этот HDMI через «Прямой эфир»</string>
     <string name="restore_live_tv">Восстановить прямой эфир</string>
+    <string name="my_quotes">Мои котировки</string>
+    <string name="add_currency_pair">Добавить валютную пару</string>
+    <string name="invalid_currency_pair">Введи валютную пару, например EUR/RON.</string>
+    <string name="duplicate_currency_pair">Эта пара уже в списке.</string>
 </resources>

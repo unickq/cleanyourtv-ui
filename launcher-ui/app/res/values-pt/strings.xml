@@ -391,4 +391,8 @@
     <string name="no_hdmi_inputs">Nenhuma entrada HDMI encontrada</string>
     <string name="use_hdmi_for_live_tv">Abrir esta entrada HDMI pela TV ao vivo</string>
     <string name="restore_live_tv">Restaurar TV ao vivo</string>
+    <string name="my_quotes">Minhas cotações</string>
+    <string name="add_currency_pair">Adicionar par de moedas</string>
+    <string name="invalid_currency_pair">Digite um par de moedas como EUR/RON.</string>
+    <string name="duplicate_currency_pair">Esse par já está na lista.</string>
 </resources>

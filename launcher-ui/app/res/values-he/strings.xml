@@ -417,4 +417,8 @@
     <string name="no_hdmi_inputs">לא נמצאו כניסות HDMI</string>
     <string name="use_hdmi_for_live_tv">פתיחת כניסת HDMI זו מטלוויזיה בשידור חי</string>
     <string name="restore_live_tv">שחזור טלוויזיה בשידור חי</string>
+    <string name="my_quotes">השערים שלי</string>
+    <string name="add_currency_pair">הוספת צמד מטבעות</string>
+    <string name="invalid_currency_pair">הזינו צמד מטבעות כמו EUR/RON.</string>
+    <string name="duplicate_currency_pair">הצמד הזה כבר ברשימה.</string>
 </resources>
