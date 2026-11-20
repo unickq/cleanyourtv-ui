@@ -178,4 +178,9 @@
     <string name="weather_hours_ago">"vor %1$d Std."</string>
     <string name="duration_minutes">"%1$d Min."</string>
     <string name="duration_hours_minutes">"%1$d Std. %2$d Min."</string>
+    <string name="continue_watching">Weiterschauen</string>
+    <string name="watch_next_source">Aus deinen Android-TV-Apps</string>
+    <string name="watch_next_allow">Zugriff auf die Wiedergabeliste erlauben</string>
+    <string name="watch_next_empty">Noch keine App hat Inhalte zum Weiterschauen geteilt.</string>
+    <string name="watch_next_unavailable">Die Android-TV-Wiedergabeliste ist nicht verfügbar.</string>
 </resources>

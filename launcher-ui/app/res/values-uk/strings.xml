@@ -414,4 +414,9 @@
     <string name="duration_minutes">"%1$d хв"</string>
     <string name="duration_hours_minutes">"%1$d год %2$d хв"</string>
     <string name="stale_quote_prefix">""</string>
+    <string name="continue_watching">Продовжити перегляд</string>
+    <string name="watch_next_source">Із застосунків Android TV</string>
+    <string name="watch_next_allow">Дозволити доступ до списку перегляду</string>
+    <string name="watch_next_empty">Застосунки ще не додали нічого для продовження перегляду.</string>
+    <string name="watch_next_unavailable">Список перегляду Android TV недоступний.</string>
 </resources>

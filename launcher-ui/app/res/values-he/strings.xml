@@ -407,4 +407,9 @@
     <string name="weather_hours_ago">"לפני %1$d שע\'"</string>
     <string name="duration_minutes">"%1$d דק\'"</string>
     <string name="duration_hours_minutes">"%1$d שע\' %2$d דק\'"</string>
+    <string name="continue_watching">המשך צפייה</string>
+    <string name="watch_next_source">מאפליקציות Android TV שלך</string>
+    <string name="watch_next_allow">מתן גישה לרשימת הצפייה</string>
+    <string name="watch_next_empty">אף אפליקציה עדיין לא שיתפה תוכן להמשך צפייה.</string>
+    <string name="watch_next_unavailable">רשימת הצפייה של Android TV אינה זמינה.</string>
 </resources>

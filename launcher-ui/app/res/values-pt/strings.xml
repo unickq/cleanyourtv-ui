@@ -381,4 +381,9 @@
     <string name="weather_hours_ago">"há %1$d h"</string>
     <string name="duration_minutes">"%1$d min"</string>
     <string name="duration_hours_minutes">"%1$d h %2$d min"</string>
+    <string name="continue_watching">Continuar assistindo</string>
+    <string name="watch_next_source">Dos seus apps do Android TV</string>
+    <string name="watch_next_allow">Permitir acesso à lista de reprodução</string>
+    <string name="watch_next_empty">Nenhum app compartilhou conteúdo para continuar assistindo.</string>
+    <string name="watch_next_unavailable">A lista de reprodução do Android TV está indisponível.</string>
 </resources>

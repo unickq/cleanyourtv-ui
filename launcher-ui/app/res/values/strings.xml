@@ -549,4 +549,9 @@
     <string name="weather_hours_ago">"%1$d h ago"</string>
     <string name="duration_minutes">"%1$dm"</string>
     <string name="duration_hours_minutes">"%1$dh %2$dm"</string>
+    <string name="continue_watching">Continue watching</string>
+    <string name="watch_next_source">From your Android TV apps</string>
+    <string name="watch_next_allow">Allow access to Continue Watching</string>
+    <string name="watch_next_empty">No apps have shared anything to continue watching yet.</string>
+    <string name="watch_next_unavailable">The Android TV viewing list is unavailable.</string>
 </resources>

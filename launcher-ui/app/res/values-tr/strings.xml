@@ -493,4 +493,9 @@
     <string name="weather_hours_ago">"%1$d sa önce"</string>
     <string name="duration_minutes">"%1$d dk"</string>
     <string name="duration_hours_minutes">"%1$d sa %2$d dk"</string>
+    <string name="continue_watching">İzlemeye devam et</string>
+    <string name="watch_next_source">Android TV uygulamalarından</string>
+    <string name="watch_next_allow">İzleme listesine erişime izin ver</string>
+    <string name="watch_next_empty">Henüz hiçbir uygulama izlemeye devam edilecek içerik paylaşmadı.</string>
+    <string name="watch_next_unavailable">Android TV izleme listesi kullanılamıyor.</string>
 </resources>

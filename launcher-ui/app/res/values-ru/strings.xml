@@ -477,4 +477,9 @@
     <string name="weather_hours_ago">"%1$d ч назад"</string>
     <string name="duration_minutes">"%1$d мин"</string>
     <string name="duration_hours_minutes">"%1$d ч %2$d мин"</string>
+    <string name="continue_watching">Продолжить просмотр</string>
+    <string name="watch_next_source">Из приложений Android TV</string>
+    <string name="watch_next_allow">Разрешить доступ к списку просмотров</string>
+    <string name="watch_next_empty">Приложения пока не добавили ничего для продолжения просмотра.</string>
+    <string name="watch_next_unavailable">Список просмотров Android TV недоступен.</string>
 </resources>
