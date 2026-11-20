@@ -26,7 +26,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -244,14 +244,7 @@ public class DetailActivity extends Activity {
                 () -> GridActivity.open(this, Strings.get(R.string.like_prefix) + name, "/" + kind + "/" + id + "/recommendations", kind), Math.round(96 * k)));
         View first = actions.getChildAt(0);
         if (first != null) first.requestFocus();
-        new Thread(() -> {
-            Map<String, String> links = DeepLinks.find(this, kind, id, name);
-            main.post(() -> {
-                if (isFinishing()) return;
-                watchLinks = links;
-                updateChipNotes();
-            });
-        }).start();
+        new Thread(() -> DeepLinks.find(this, kind, id, name)).start();
     }
 
     private String certification(JSONObject o) {
@@ -411,11 +404,47 @@ public class DetailActivity extends Activity {
             JSONArray list = region.optJSONArray(type);
             for (int i = 0; list != null && i < list.length(); i++) {
                 JSONObject p = list.optJSONObject(i);
-                String app = Providers.app(this, p.optInt("provider_id"), p.optString("provider_name"));
-                if (app != null) return new String[] {app, p.optString("provider_name")};
+                String name = p.optString("provider_name");
+                String app = Providers.app(this, p.optInt("provider_id"), name);
+                if (app != null) return new String[] {app, preferredSubscription(region, name, type, app)};
             }
         }
         return null;
+    }
+
+    private String preferredSubscription(JSONObject region, String name, String type, String app) {
+        if (app == null || (!"flatrate".equals(type) && !"ads".equals(type))) return name;
+        JSONArray subscriptions = region.optJSONArray("flatrate");
+        if (subscriptions == null) return name;
+        for (String preferred : preferredSubscriptions(name)) {
+            for (int i = 0; i < subscriptions.length(); i++) {
+                JSONObject offer = subscriptions.optJSONObject(i);
+                if (offer == null) continue;
+                String candidate = offer.optString("provider_name");
+                if (preferred.equalsIgnoreCase(candidate) && app.equals(Providers.app(this, offer.optInt("provider_id"), candidate))) {
+                    return candidate;
+                }
+            }
+        }
+        return name;
+    }
+
+    private static String[] preferredSubscriptions(String name) {
+        switch (name.toLowerCase(Locale.ROOT)) {
+            case "netflix with ads":
+            case "netflix standard with ads":
+                return new String[] {"Netflix"};
+            case "apple tv+":
+                return new String[] {"Apple TV"};
+            case "apple tv plus":
+                return new String[] {"Apple TV", "Apple TV+"};
+            case "apple tv amazon channel":
+            case "apple tv+ amazon channel":
+            case "apple tv plus amazon channel":
+                return new String[] {"Apple TV", "Apple TV+", "Apple TV Plus"};
+            default:
+                return new String[0];
+        }
     }
 
     private TvUi.Flow whereLine;
@@ -447,7 +476,6 @@ public class DetailActivity extends Activity {
         hidePurchases = Prefs.hidePurchases();
         int firstProvider = iptvChip == null ? 0 : 1;
         whereLine.removeViews(firstProvider, whereLine.getChildCount() - firstProvider);
-        chipNotes.clear();
         kinoChipSubtitle = null;
         if (Providers.installed(this, KinoPub.PLAYER_PACKAGE)) {
             kinoChipSubtitle = chipSub(kinoSubtitle());
@@ -471,7 +499,10 @@ public class DetailActivity extends Activity {
                 if (!added.add(pid + type[0])) continue;
                 String name = p.optString("provider_name");
                 if (Providers.showInWhereToWatch(this, name, hideServicesWithoutApps)) {
-                    whereLine.addView(chip(pid, name, p.optString("logo_path"), type[1]));
+                    String app = Providers.app(this, pid, name);
+                    if (name.equals(preferredSubscription(watchRegion, name, type[0], app))) {
+                        whereLine.addView(chip(app, name, p.optString("logo_path"), type[1]));
+                    }
                 }
             }
         }
@@ -484,7 +515,6 @@ public class DetailActivity extends Activity {
         }
         whereEmpty.setVisibility(whereLine.getChildCount() == firstProvider ? View.VISIBLE : View.GONE);
         whereLine.setVisibility(whereLine.getChildCount() == 0 ? View.GONE : View.VISIBLE);
-        updateChipNotes();
     }
 
     /** The IPTV app picked in Settings › Services leads the row. IPTV has no catalog TMDB can check, so the chip
@@ -540,12 +570,12 @@ public class DetailActivity extends Activity {
                 .show();
     }
 
-    private View chip(int pid, String name, String logo, String type) {
-        String app = Providers.app(this, pid, name);
+    private View chip(String app, String name, String logo, String type) {
         ImageView img = new ImageView(this);
         Images.load(img, logo.isEmpty() ? null : Tmdb.LOGO + logo);
-        TextView s = chipSub(type + "  ·  " + (app != null ? Strings.get(R.string.opens_prefix) + Providers.label(this, app) : Strings.get(R.string.no_app_on_the_tv)));
-        if (app != null) chipNotes.add(new Object[] {app, s, type});
+        String subtitle = type;
+        if (app == null) subtitle += "  ·  " + Strings.get(R.string.no_app_on_the_tv);
+        TextView s = chipSub(subtitle);
         View chip = chipBox(img, name, s);
         chip.setOnClickListener(v -> {
             if (app != null) watch(app);
@@ -660,18 +690,6 @@ public class DetailActivity extends Activity {
             String url = DeepLinks.find(this, kind, id, name).get(pkg);
             main.post(() -> { if (!DeepLinks.open(this, pkg, url)) RemoteKeys.run(this, pkg); });
         }).start();
-    }
-
-    private final List<Object[]> chipNotes = new ArrayList<>();   // {app, subtitle view, kind of offer}
-    private Map<String, String> watchLinks;
-
-    /** Once the links are known: the chips that open the title itself say so. */
-    private void updateChipNotes() {
-        if (watchLinks == null) return;
-        for (Object[] n : chipNotes) {
-            String app = (String) n[0];
-            if (watchLinks.containsKey(app)) ((TextView) n[1]).setText(n[2] + "  ·  " + Strings.get(R.string.opens_the_title_in_prefix) + Providers.label(this, app));
-        }
     }
 
     private void background(String failure, Task task) {
