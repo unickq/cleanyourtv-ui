@@ -81,7 +81,7 @@ final class Config {
     static final String LATITUDE = "$LAT";
     static final String LONGITUDE = "$LON";
     static final String CITY = "$(prop city '')";
-    static final String LANGUAGE = "$(prop language auto)";
+    static final String LANGUAGE = "$(prop language en)";
     static final String CURRENCY = "$(prop currency USD)";
     static final String TEMPERATURE = "$(prop temperature auto)";
     static final boolean DISABLE_ASSISTANT = $ASSIST;

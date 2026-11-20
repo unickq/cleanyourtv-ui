@@ -95,6 +95,10 @@ final class Providers {
         return null;
     }
 
+    static boolean showInWhereToWatch(Context c, String name, boolean hideWithoutApps) {
+        return !hideWithoutApps || officialApp(c, name) != null;
+    }
+
     /** The app that opens this service now, or null (none installed, or turned off). */
     static String app(Context c, int id, String name) {
         String pick = Prefs.provider(String.valueOf(id));
@@ -105,17 +109,6 @@ final class Providers {
 
     static boolean off(int id) {
         return "off".equals(Prefs.provider(String.valueOf(id)));
-    }
-
-    /** The services Explore and the picks use: the ones with an app, or all but the turned-off ones. */
-    static List<Provider> usable(Context c) throws Exception {
-        List<Provider> out = new ArrayList<>();
-        boolean all = Prefs.showAllProviders();
-        for (Provider p : region()) {
-            if (off(p.id)) continue;
-            if (all || app(c, p.id, p.name) != null) out.add(p);
-        }
-        return out;
     }
 
     static boolean installed(Context c, String pkg) {

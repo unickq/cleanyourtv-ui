@@ -196,10 +196,10 @@ final class HomeApps {
     static List<Item> shortcuts(Context c) {
         List<Item> items = new ArrayList<>();
         if (liveTv(c) != null) {
-            items.add(shortcut(LIVE_TV, "live", Ui.tr("TV ao Vivo", "Live TV"), "tv"));
+            items.add(shortcut(LIVE_TV, "live", Strings.get(R.string.live_tv), "tv"));
         }
         items.addAll(inputs(c));
-        items.add(shortcut(ALL_APPS, "all", Ui.tr("Todos os Apps", "All Apps"), "apps"));
+        items.add(shortcut(ALL_APPS, "all", Strings.get(R.string.all_apps), "apps"));
         return items;
     }
 
@@ -219,16 +219,16 @@ final class HomeApps {
 
     /** The app's settings, in the corner of the home screen. */
     static Item settings() {
-        return shortcut(SETTINGS, "settings", Ui.tr("Ajustes", "Settings"), "settings");
+        return shortcut(SETTINGS, "settings", Strings.get(R.string.settings), "settings");
     }
 
     /** Shortcuts in the bottom drawer. */
     static List<Item> drawerShortcuts() {
         List<Item> items = new ArrayList<>();
-        items.add(shortcut(ALL_APPS, "all", Ui.tr("Todos os Apps", "All Apps"), "apps"));
-        items.add(shortcut(NETWORK, "network", Ui.tr("Wi-Fi e Rede", "Wi-Fi & Network"), "wifi"));
-        items.add(shortcut(SETTINGS, "settings", Ui.tr("Ajustes do Início", "Home Settings"), "settings"));
-        items.add(shortcut(ANDROID_SETTINGS, "tv-settings", Ui.tr("Ajustes da TV", "TV Settings"), "tv_settings"));
+        items.add(shortcut(ALL_APPS, "all", Strings.get(R.string.all_apps), "apps"));
+        items.add(shortcut(NETWORK, "network", Strings.get(R.string.wi_fi_network), "wifi"));
+        items.add(shortcut(SETTINGS, "settings", Strings.get(R.string.home_settings), "settings"));
+        items.add(shortcut(ANDROID_SETTINGS, "tv-settings", Strings.get(R.string.tv_settings), "tv_settings"));
         return items;
     }
 
@@ -245,9 +245,34 @@ final class HomeApps {
     /** For the bottom drawer: live TV and every HDMI input (the ones with no device are shown dimmed). */
     static List<Item> allInputs(Context c) {
         List<Item> items = new ArrayList<>();
-        if (liveTv(c) != null) items.add(shortcut(LIVE_TV, "live", Ui.tr("TV ao Vivo", "Live TV"), "tv"));
+        if (liveTv(c) != null) items.add(shortcut(LIVE_TV, "live", Strings.get(R.string.live_tv), "tv"));
         items.addAll(inputs(c, true));
         return items;
+    }
+
+    static List<Item> drawerInputs(Context c) {
+        List<Item> ports = editableHdmi(c);
+        ports.removeIf(port -> Prefs.hdmiHidden(port.inputId));
+        for (Item port : ports) {
+            if (!port.inputId.equals(Prefs.liveHdmi())) continue;
+            Item live = shortcut(INPUT, "live", Strings.get(R.string.live_tv) + " · " + port.label, "tv");
+            live.inputId = port.inputId;
+            live.connected = port.connected;
+            ports.add(0, live);
+            return ports;
+        }
+        if (liveTv(c) != null) ports.add(0, shortcut(LIVE_TV, "live", Strings.get(R.string.live_tv), "tv"));
+        return ports;
+    }
+
+    static List<Item> editableHdmi(Context c) {
+        List<Item> ports = inputs(c, true);
+        List<String> order = Prefs.hdmiOrder();
+        ports.sort(java.util.Comparator.comparingInt(port -> {
+            int index = order.indexOf(port.inputId);
+            return index < 0 ? Integer.MAX_VALUE : index;
+        }));
+        return ports;
     }
 
     private static List<Item> inputs(Context c) {

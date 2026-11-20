@@ -1,7 +1,7 @@
 {
   "tmdb_key": "",
   "tmdb_region": "auto",
-  "language": "auto",
+  "language": "en",
   "shelf": [
     "com.netflix.ninja",
     "com.disney.disneyplus",

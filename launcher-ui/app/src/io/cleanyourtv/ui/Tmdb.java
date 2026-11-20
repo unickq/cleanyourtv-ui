@@ -93,6 +93,7 @@ final class Tmdb {
             case "es": return "es-ES";
             case "de": return "de-DE";
             case "ru": return "ru-RU";
+            case "uk": return "uk-UA";
             case "fr": return "fr-FR";
             case "tr": return "tr-TR";
             case "he": return "he-IL";
@@ -189,7 +190,7 @@ final class Tmdb {
 
     private static String call(String method, String path, String body) throws IOException {
         String key = Prefs.tmdbKey();
-        if (key.isEmpty()) throw new IOException(Ui.tr("sem chave do TMDB", "no TMDB key"));
+        if (key.isEmpty()) throw new IOException(Strings.get(R.string.no_tmdb_key));
         boolean bearer = key.startsWith("eyJ");
         String url = API + path + (bearer ? "" : (path.contains("?") ? "&" : "?") + "api_key=" + URLEncoder.encode(key, "UTF-8"));
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
@@ -241,6 +242,8 @@ final class Tmdb {
         final String name, poster, backdrop, year;
         final double vote;
         String overview = "", lang = "", date = "";
+        String kinoCaption = "";
+        boolean kinoNeedsSeasons;
         int[] genres = new int[0];
 
         Title(String kind, int id, String name, String poster, String backdrop, String year, double vote) {

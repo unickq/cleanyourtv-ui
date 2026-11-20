@@ -27,7 +27,7 @@ final class Prefs {
 
     static void init(Context c) {
         app = c.getApplicationContext();
-        Ui.applyLanguage();   // the language picked on the TV, now that it can be read
+        Ui.applyLanguage(app);   // the language picked on the TV, now that it can be read
     }
 
     private static SharedPreferences sp() {
@@ -46,15 +46,15 @@ final class Prefs {
 
     // MARK: - Language and units
 
-    /** "auto", "pt", "en", "es", "de", "ru", "fr", "tr" or "he". */
+    /** "auto", "pt", "en", "es", "de", "ru", "uk", "fr", "tr" or "he". */
     static String language() {
         String v = app == null ? Config.LANGUAGE : sp().getString("language", Config.LANGUAGE);
         v = v.trim().toLowerCase(Locale.ROOT);
-        return v.startsWith("ru") ? "ru" : v.startsWith("pt") ? "pt" : v.startsWith("es") ? "es" : v.startsWith("de") ? "de"
+        return v.startsWith("ru") ? "ru" : v.startsWith("uk") ? "uk" : v.startsWith("pt") ? "pt" : v.startsWith("es") ? "es" : v.startsWith("de") ? "de"
                 : v.startsWith("fr") ? "fr" : v.startsWith("tr") ? "tr" : v.startsWith("he") || v.startsWith("iw") ? "he" : v.startsWith("en") ? "en" : "auto";
     }
 
-    static void setLanguage(String v) { put("language", v); Ui.applyLanguage(); }
+    static void setLanguage(String v) { put("language", v); Ui.applyLanguage(app); }
 
     /** "auto", "C" or "F". */
     static String temperature() {
@@ -132,7 +132,7 @@ final class Prefs {
     static void reload() {
         if (app == null) return;
         app.getSharedPreferences("settings", Context.MODE_MULTI_PROCESS);
-        Ui.applyLanguage();
+        Ui.applyLanguage(app);
     }
 
     // MARK: - City
@@ -171,6 +171,15 @@ final class Prefs {
 
     static void setCurrency(String currency) { put("currency", currency.trim().toUpperCase(Locale.ROOT)); }
 
+    static final int MAX_FX_PAIRS = 4;
+
+    static List<String> fxPairs() {
+        String saved = sp().getString("fxPairs", "");
+        return saved.isEmpty() ? new ArrayList<>() : new ArrayList<>(java.util.Arrays.asList(saved.split(",")));
+    }
+
+    static void setFxPairs(List<String> pairs) { put("fxPairs", String.join(",", pairs)); }
+
     // MARK: - Widgets and coins
 
     static boolean weather() { return sp().getBoolean("weather", true); }
@@ -198,6 +207,17 @@ final class Prefs {
         for (String p : packages) sb.append(sb.length() == 0 ? "" : ",").append(p);
         put("shelf", sb.toString());
     }
+
+    static List<String> hdmiOrder() {
+        return java.util.Arrays.asList(sp().getString("hdmiOrder", "").split(","));
+    }
+
+    static void setHdmiOrder(List<String> ids) { put("hdmiOrder", String.join(",", ids)); }
+
+    static boolean hdmiHidden(String id) { return sp().getBoolean("hdmiHidden." + id, false); }
+    static void setHdmiHidden(String id, boolean hidden) { put("hdmiHidden." + id, hidden); }
+    static String liveHdmi() { return sp().getString("liveHdmi", ""); }
+    static void setLiveHdmi(String id) { put("liveHdmi", id); }
 
     // MARK: - Hidden apps
 
@@ -236,6 +256,15 @@ final class Prefs {
     /** Picks from every provider in the region, not only the ones with an app on the TV. */
     static boolean showAllProviders() { return sp().getBoolean("showAllProviders", false); }
     static void setShowAllProviders(boolean on) { put("showAllProviders", on); }
+
+    static boolean hideServicesWithoutApps() { return sp().getBoolean("hideServicesWithoutApps", false); }
+    static void setHideServicesWithoutApps(boolean on) { put("hideServicesWithoutApps", on); }
+
+    static boolean hideRentals() { return sp().getBoolean("hideRentals", false); }
+    static void setHideRentals(boolean on) { put("hideRentals", on); }
+
+    static boolean hidePurchases() { return sp().getBoolean("hidePurchases", false); }
+    static void setHidePurchases(boolean on) { put("hidePurchases", on); }
 
     // MARK: - Trailer player
 

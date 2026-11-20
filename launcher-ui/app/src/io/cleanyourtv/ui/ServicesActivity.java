@@ -2,6 +2,9 @@ package io.cleanyourtv.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -54,23 +57,38 @@ public class ServicesActivity extends Activity {
         Object focusTag = focused == null ? null : focused.getTag();
         list.removeAllViews();
         TextView h = TvUi.text(this, k, 56, Ui.displaySemibold, TvUi.INK);
-        h.setText(Ui.tr("Serviços", "Services"));
+        h.setText(Strings.get(R.string.services));
         list.addView(h);
         TextView sub = TvUi.text(this, k, 26, Ui.regular, TvUi.DIM);
-        sub.setText(Ui.tr("Escolha qual app abre cada serviço. As sugestões e o Explorar usam só os serviços com app, a não ser que você mostre todos.",
-                "Pick the app that opens each service. Picks and Explore only use services with an app, unless you show them all."));
+        sub.setText(Strings.get(R.string.service_app_settings_hint));
         sub.setPadding(0, Math.round(12 * k), 0, Math.round(26 * k));
         list.addView(sub);
-        list.addView(row("trailer", null, Ui.tr("Trailers de Filmes e Séries", "Movie & TV Trailers"), trailerPlayerValue(), v -> pickTrailerPlayer(providers)));
-        list.addView(row("iptv", null, Ui.tr("App de IPTV", "IPTV app"), iptvPlayerValue(), v -> pickIptvPlayer(providers)));
-        list.addView(row("all", null, Ui.tr("Mostrar todos os serviços", "Show every service"),
-                Prefs.showAllProviders() ? Ui.tr("Ligado", "On") : Ui.tr("Desligado", "Off"), v -> {
+        list.addView(row("trailer", null, Strings.get(R.string.movie_tv_trailers), trailerPlayerValue(), v -> pickTrailerPlayer(providers)));
+        list.addView(row("iptv", null, Strings.get(R.string.iptv_app), iptvPlayerValue(), v -> pickIptvPlayer(providers)));
+        list.addView(row("all", null, Strings.get(R.string.show_every_service),
+                Prefs.showAllProviders() ? Strings.get(R.string.on) : Strings.get(R.string.off), v -> {
                     Prefs.setShowAllProviders(!Prefs.showAllProviders());
                     build(providers);
                 }));
+        list.addView(row("hideWithoutApps", null, Strings.get(R.string.hide_services_without_installed_apps),
+                Prefs.hideServicesWithoutApps() ? Strings.get(R.string.on) : Strings.get(R.string.off), v -> {
+                    Prefs.setHideServicesWithoutApps(!Prefs.hideServicesWithoutApps());
+                    build(providers);
+                }));
+        list.addView(row("hideRentals", null, Strings.get(R.string.hide_rentals),
+                Prefs.hideRentals() ? Strings.get(R.string.on) : Strings.get(R.string.off), v -> {
+                    Prefs.setHideRentals(!Prefs.hideRentals());
+                    build(providers);
+                }));
+        list.addView(row("hidePurchases", null, Strings.get(R.string.hide_purchases),
+                Prefs.hidePurchases() ? Strings.get(R.string.on) : Strings.get(R.string.off), v -> {
+                    Prefs.setHidePurchases(!Prefs.hidePurchases());
+                    build(providers);
+                }));
+        list.addView(kinoWatchRow());
         if (providers == null) {
             TextView loading = TvUi.text(this, k, 26, Ui.regular, TvUi.DIM);
-            loading.setText(Ui.tr("Carregando os serviços…", "Loading the services…"));
+            loading.setText(Strings.get(R.string.loading_the_services));
             loading.setPadding(0, Math.round(30 * k), 0, 0);
             list.addView(loading);
             new Thread(() -> {
@@ -78,7 +96,7 @@ public class ServicesActivity extends Activity {
                     List<Providers.Provider> got = Providers.region();
                     main.post(() -> build(got.size() > 40 ? got.subList(0, 40) : got));
                 } catch (Exception e) {
-                    main.post(() -> loading.setText(Ui.tr("Não deu para buscar os serviços: ", "Couldn't fetch the services: ") + e.getMessage()));
+                    main.post(() -> loading.setText(Strings.get(R.string.couldnt_fetch_the_services_prefix) + e.getMessage()));
                 }
             }).start();
         } else {
@@ -92,29 +110,41 @@ public class ServicesActivity extends Activity {
 
     private String value(Providers.Provider p) {
         String pick = Prefs.provider(String.valueOf(p.id));
-        if ("off".equals(pick)) return Ui.tr("Desligado", "Off");
+        if ("off".equals(pick)) return Strings.get(R.string.off);
         String app = Providers.app(this, p.id, p.name);
-        if (app == null) return Ui.tr("Sem app na TV", "No app on the TV");
-        return (pick.isEmpty() ? Ui.tr("Automático · ", "Automatic · ") : "") + Providers.label(this, app);
+        if (app == null) return Strings.get(R.string.no_app_on_the_tv_2);
+        return (pick.isEmpty() ? Strings.get(R.string.automatic_prefix) : "") + Providers.label(this, app);
+    }
+
+    private View kinoWatchRow() {
+        ImageView icon = null;
+        try {
+            Drawable drawable = getPackageManager().getApplicationIcon(KinoPub.PLAYER_PACKAGE);
+            icon = new ImageView(this);
+            icon.setImageDrawable(drawable);
+        } catch (PackageManager.NameNotFoundException ignored) {
+        }
+        return rowWithIcon("kinowatch", icon, "KinoWatch", Strings.get(R.string.kinopub_account),
+                v -> startActivity(new Intent(this, KinoLoginActivity.class)));
     }
 
     private String trailerPlayerValue() {
         String picked = Prefs.trailerPlayer();
         if (!picked.isEmpty() && Providers.installed(this, picked)) return Providers.label(this, picked);
-        return Ui.tr("Automático", "Automatic");
+        return Strings.get(R.string.automatic);
     }
 
     private void pickTrailerPlayer(List<Providers.Provider> providers) {
         List<String> values = new ArrayList<>(), labels = new ArrayList<>();
         values.add("");
-        labels.add(Ui.tr("Automático", "Automatic"));
+        labels.add(Strings.get(R.string.automatic));
         for (String pkg : Providers.youtubePlayers(this)) {
             values.add(pkg);
             labels.add(Providers.label(this, pkg));
         }
         String current = Prefs.trailerPlayer();
         new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(Ui.tr("Trailers de Filmes e Séries", "Movie & TV Trailers"))
+                .setTitle(Strings.get(R.string.movie_tv_trailers))
                 .setSingleChoiceItems(labels.toArray(new String[0]), Math.max(0, values.indexOf(current)), (d, which) -> {
                     Prefs.setTrailerPlayer(values.get(which));
                     d.dismiss();
@@ -125,21 +155,21 @@ public class ServicesActivity extends Activity {
 
     private String iptvPlayerValue() {
         String picked = Prefs.iptvPlayer();
-        return !picked.isEmpty() && Providers.installed(this, picked) ? Providers.label(this, picked) : Ui.tr("Desligado", "Off");
+        return !picked.isEmpty() && Providers.installed(this, picked) ? Providers.label(this, picked) : Strings.get(R.string.off);
     }
 
     /** Any installed app: nothing in an IPTV player's manifest tells it apart from other apps. */
     private void pickIptvPlayer(List<Providers.Provider> providers) {
         List<String> values = new ArrayList<>(), labels = new ArrayList<>();
         values.add("");
-        labels.add(Ui.tr("Desligado", "Off"));
+        labels.add(Strings.get(R.string.off));
         for (String[] a : apps) {
             values.add(a[0]);
             labels.add(a[1]);
         }
         String current = Prefs.iptvPlayer();
         new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(Ui.tr("App de IPTV", "IPTV app"))
+                .setTitle(Strings.get(R.string.iptv_app))
                 .setSingleChoiceItems(labels.toArray(new String[0]), Math.max(0, values.indexOf(current)), (d, which) -> {
                     Prefs.setIptvPlayer(values.get(which));
                     d.dismiss();
@@ -152,9 +182,9 @@ public class ServicesActivity extends Activity {
         List<String> values = new ArrayList<>(), labels = new ArrayList<>();
         String official = Providers.officialApp(this, p.name);
         values.add("");
-        labels.add(Ui.tr("Automático", "Automatic") + " · " + (official == null ? Ui.tr("sem app oficial", "no official app") : Providers.label(this, official)));
+        labels.add(Strings.get(R.string.automatic) + " · " + (official == null ? Strings.get(R.string.no_official_app) : Providers.label(this, official)));
         values.add("off");
-        labels.add(Ui.tr("Desligado", "Off"));
+        labels.add(Strings.get(R.string.off));
         for (String[] a : apps) {
             values.add(a[0]);
             labels.add(a[1]);
@@ -171,20 +201,27 @@ public class ServicesActivity extends Activity {
     }
 
     private View row(Object tag, String logo, String name, String value, View.OnClickListener click) {
+        ImageView icon = null;
+        if (logo != null) {
+            icon = new ImageView(this);
+            Images.load(icon, logo.isEmpty() ? null : Tmdb.LOGO + logo);
+        }
+        return rowWithIcon(tag, icon, name, value, click);
+    }
+
+    private View rowWithIcon(Object tag, ImageView icon, String name, String value, View.OnClickListener click) {
         LinearLayout row = new LinearLayout(this);
         row.setTag(tag);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(Math.round(26 * k), Math.round(14 * k), Math.round(30 * k), Math.round(14 * k));
-        if (logo != null) {
-            ImageView img = new ImageView(this);
-            img.setClipToOutline(true);
-            img.setBackground(TvUi.round(0x00000000, 10 * k));
-            Images.load(img, logo.isEmpty() ? null : Tmdb.LOGO + logo);
+        if (icon != null) {
+            icon.setClipToOutline(true);
+            icon.setBackground(TvUi.round(0x00000000, 10 * k));
             int s = Math.round(52 * k);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(s, s);
             lp.rightMargin = Math.round(22 * k);
-            row.addView(img, lp);
+            row.addView(icon, lp);
         }
         TextView n = TvUi.text(this, k, 30, Ui.medium, TvUi.INK);
         n.setText(name);
