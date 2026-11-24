@@ -8,6 +8,8 @@
     <string name="all">"Tout"</string>
     <string name="all_ages">"Tous publics"</string>
     <string name="all_apps">"Toutes les applis"</string>
+    <string name="system_apps_in_all_apps">"Applis système dans Toutes les applis"</string>
+    <string name="apps_settings">"Réglages des applis"</string>
     <string name="anime">"Animés"</string>
     <string name="any_year">"Toutes les années"</string>
     <string name="app_settings">"Réglages de l\'appli"</string>
@@ -31,6 +33,9 @@
     <string name="clear">"Effacer"</string>
     <string name="clock_and_aurora">"Horloge et aurore"</string>
     <string name="clock_format">"Format de l\'heure"</string>
+    <string name="at_power_on">"À l\'allumage"</string>
+    <string name="power_on_tv">"Au choix de la TV"</string>
+    <string name="power_on_hint">"Seulement après un démarrage complet, pas en sortie de veille."</string>
     <string name="close">"Fermer"</string>
     <string name="connect_tmdb_account">"Connecter le compte TMDB"</string>
     <string name="connect_your_tmdb_account">"Connectez votre compte TMDB"</string>
@@ -81,6 +86,9 @@
     <string name="getting_ready">"Préparation…"</string>
     <string name="go_to_settings">"Aller aux Réglages"</string>
     <string name="hdmi_inputs">"Entrées HDMI"</string>
+    <string name="app_store">"Boutique d\'applis"</string>
+    <string name="add_app_store_button">"Ajouter le bouton Boutique"</string>
+    <string name="remove_app_store_button">"Retirer le bouton Boutique"</string>
     <string name="hidden">"Masqué"</string>
     <string name="hide">"Masquer « "</string>
     <string name="hide_2">"Masquer"</string>
@@ -148,8 +156,18 @@
     <string name="no_weather_data_right_now">"Pas de données météo pour le moment."</string>
     <string name="not_connected_2">"Non connecté"</string>
     <string name="not_installed">"Non installé"</string>
+    <string name="now_playing_announce">"En lecture : %1$s"</string>
+    <string name="now_playing_hint">"Titre, artiste et appli de la lecture. Rien ne quitte la TV."</string>
+    <string name="now_playing_hint_not_allowed">"Autorisez-le depuis un ordinateur avec NOW_PLAYING=1."</string>
+    <string name="now_playing_not_allowed">"Non autorisé"</string>
+    <string name="now_playing_widget">"Widget En lecture"</string>
     <string name="not_on_any_streaming_service_in_the_region_right_now">"Disponible sur aucune plateforme de streaming dans la région pour le moment."</string>
     <string name="not_on_the_shelf">"pas dans la barre d\'applis"</string>
+    <string name="inputs_edit_hint">"OK affiche ou masque une source. ← → changent l\'ordre."</string>
+    <string name="in_the_inputs_place_prefix">"dans les sources, place "</string>
+    <string name="not_in_the_inputs">"hors des sources"</string>
+    <string name="input_hidden">"Masquée"</string>
+    <string name="live_tv_button">"Bouton TV en direct"</string>
     <string name="nothing_found">"Aucun résultat."</string>
     <string name="nothing_here_yet_open_a_title_to_add_it">"Rien ici pour l\'instant. Ouvrez un titre pour l\'ajouter."</string>
     <string name="nothing_matches_this_filter">"Aucun résultat pour ce filtre."</string>
@@ -203,6 +221,8 @@
     <string name="saved_to_the_menu">"Enregistré dans le menu"</string>
     <string name="screensaver">"Économiseur d\'écran"</string>
     <string name="screensaver_preview">"Économiseur d\'écran, aperçu"</string>
+    <string name="screensaver_ok_hint">"Appuyez sur OK pour regarder sur %1$s · tout autre bouton ferme"</string>
+    <string name="screensaver_ok_opens_title">"OK sur l\'économiseur d\'écran ouvre le titre"</string>
     <string name="search">"Rechercher"</string>
     <string name="side_menu_edit_hint">"Rechercher, Accueil et Ma liste restent toujours en haut. OK sur un élément : déplacer, masquer ou retirer."</string>
     <string name="search_movie_via_iptv">"Chercher le film via IPTV"</string>
@@ -222,6 +242,10 @@
     <string name="settings_2">"Réglages"</string>
     <string name="shelf">"Barre d\'applis"</string>
     <string name="shelf_edit_hint">"OK ajoute ou retire (jusqu\'à %1$d). ← → changent l\'ordre."</string>
+    <string name="shelf_edit_hint_recent">"OK ajoute ou retire (jusqu\'à %1$d). La dernière appli ouverte passe en premier."</string>
+    <string name="shelf_order">"Ordre de la barre d\'applis"</string>
+    <string name="shelf_order_manual">"Mon ordre"</string>
+    <string name="shelf_order_recent">"Dernière ouverte en premier"</string>
     <string name="shortcuts">"Raccourcis"</string>
     <string name="show">"Série"</string>
     <string name="show_every_service">"Afficher toutes les plateformes"</string>
@@ -242,6 +266,12 @@
     <string name="the_link_expired_go_back_and_open_it_again">"Le lien a expiré. Revenez en arrière et rouvrez-le."</string>
     <string name="the_tvs_own">"Celui de la TV"</string>
     <string name="theme">"Thème"</string>
+    <string name="top_of_screen">"Haut de l\'écran"</string>
+    <string name="continue_watching">"Reprendre"</string>
+    <string name="watch_nothing">"Rien en cours dans vos applis."</string>
+    <string name="watch_needs_permission">"Autorisez-le depuis un ordinateur : %1$s"</string>
+    <string name="watch_time_left">"reste %1$s"</string>
+    <string name="watch_episode">"S%1$s É%2$s"</string>
     <string name="this_afternoon">"CET APRÈS-MIDI"</string>
     <string name="this_morning">"CE MATIN"</string>
     <string name="tmdb_attribution">"Ce produit utilise l\'API TMDB mais n\'est ni approuvé ni certifié par TMDB."</string>
@@ -271,6 +301,8 @@
     <string name="trending_this_week">"Tendances de la semaine"</string>
     <string name="trending_today">"Tendances du jour"</string>
     <string name="tv_settings">"Réglages de la TV"</string>
+    <string name="keystone">"Keystone"</string>
+    <string name="screen_mirroring">"Recopie d\'écran"</string>
     <string name="tv_settings_2">"Réglages de la TV"</string>
     <string name="type_the_citys_name">"Tapez le nom de la ville"</string>
     <string name="waiting_for_approval">"En attente d\'approbation…"</string>
@@ -313,6 +345,22 @@
     <string name="weather_range_wide">"Max. %1$s   Min. %2$s"</string>
     <string name="weather_minutes_ago">"il y a %1$d min"</string>
     <string name="weather_hours_ago">"il y a %1$d h"</string>
+    <string name="weather_rain_now">"Il pleut"</string>
+    <string name="weather_rain_in_hours">"Pluie dans %1$d h"</string>
+    <string name="weather_day_range">"%1$s : maximum %2$s, minimum %3$s"</string>
+    <string name="next_days_suffix_prefix">" Prochains jours : "</string>
+    <string name="forecast">"Prévisions"</string>
+    <string name="forecast_next_hours">"Prochaines heures"</string>
+    <string name="forecast_next_5_days">"5 prochains jours"</string>
     <string name="duration_minutes">"%1$d min"</string>
     <string name="duration_hours_minutes">"%1$d h %2$d min"</string>
+    <string name="sleep_timer">"Minuterie de veille"</string>
+    <string name="sleep_minutes">"%1$d min"</string>
+    <string name="sleep_left">"Encore %1$d min"</string>
+    <string name="sleep_unavailable">"Nécessite le service des touches"</string>
+    <string name="sleep_unavailable_why">"La minuterie met la TV en veille via le service des touches de la télécommande, désactivé sur cette TV. Activez-le depuis un ordinateur : KEY_SERVICE=1 launcher-ui/build-and-install.sh"</string>
+    <string name="sleep_warning">"La TV s\'éteint dans %1$d s"</string>
+    <string name="sleep_more">"15 minutes de plus"</string>
+    <string name="sleep_keep_on">"Garder la TV allumée"</string>
+    <string name="sleep_now">"Éteindre maintenant"</string>
 </resources>

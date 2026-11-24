@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="remote_key_service">Кнопки застосунків на пульті (Netflix, YouTube, Prime Video, TCL Channel) відкривають вибрані вами застосунки. Служба зчитує лише ці кнопки.</string>
+    <string name="remote_key_service">Кнопки застосунків на пульті (Netflix, YouTube, Prime Video, TCL Channel) відкривають вибрані вами застосунки; через службу таймер сну вимикає ТВ. Служба зчитує лише ці кнопки.</string>
     <string name="a_pngs_url_empty_the_apps_icon">"URL зображення PNG (порожньо — іконка застосунку)"</string>
     <string name="account_services_and_the_menus_order">"Обліковий запис, сервіси й порядок пунктів меню"</string>
     <string name="acting">"Акторські роботи"</string>
@@ -13,6 +13,8 @@
     <string name="all">"Усі"</string>
     <string name="all_ages">"Для будь-якого віку"</string>
     <string name="all_apps">"Усі застосунки"</string>
+    <string name="system_apps_in_all_apps">"Показувати системні застосунки"</string>
+    <string name="apps_settings">"Налаштування застосунків"</string>
     <string name="animation">"Анімація"</string>
     <string name="anime">"Аніме"</string>
     <string name="any_year">"Будь-який рік"</string>
@@ -38,6 +40,9 @@
     <string name="clear">"Ясно"</string>
     <string name="clock_and_aurora">"Годинник і сяйво"</string>
     <string name="clock_format">"Формат годинника"</string>
+    <string name="at_power_on">"Після увімкнення"</string>
+    <string name="power_on_tv">"На розсуд ТВ"</string>
+    <string name="power_on_hint">"Лише після повного увімкнення, не після режиму очікування."</string>
     <string name="close">"Закрити"</string>
     <string name="connect_tmdb_account">"Підключити обліковий запис TMDB"</string>
     <string name="connect_your_tmdb_account">"Підключіть обліковий запис TMDB"</string>
@@ -116,6 +121,9 @@
     <string name="go_to_settings">"До налаштувань"</string>
     <string name="google_photos">"Google Фото"</string>
     <string name="hdmi_inputs">"Входи HDMI"</string>
+    <string name="app_store">"Магазин застосунків"</string>
+    <string name="add_app_store_button">"Додати кнопку магазину"</string>
+    <string name="remove_app_store_button">"Прибрати кнопку магазину"</string>
     <string name="hidden">"Приховано"</string>
     <string name="hide">"Приховати «"</string>
     <string name="hide_2">"Приховати"</string>
@@ -191,8 +199,18 @@
     <string name="no_weather_data_right_now">"Наразі немає даних про погоду."</string>
     <string name="not_connected_2">"Не підключено"</string>
     <string name="not_installed">"Не встановлено"</string>
+    <string name="now_playing_announce">"Зараз грає: %1$s"</string>
+    <string name="now_playing_hint">"Назва, виконавець і застосунок. Ніщо не залишає телевізор."</string>
+    <string name="now_playing_hint_not_allowed">"Дозвольте з комп’ютера: NOW_PLAYING=1."</string>
+    <string name="now_playing_not_allowed">"Не дозволено"</string>
+    <string name="now_playing_widget">"Віджет «Зараз грає»"</string>
     <string name="not_on_any_streaming_service_in_the_region_right_now">"Наразі недоступно в жодному стримінговому сервісі регіону."</string>
     <string name="not_on_the_shelf">"не в обраному"</string>
+    <string name="inputs_edit_hint">"OK — показати або приховати вхід. ← → — змінити порядок."</string>
+    <string name="in_the_inputs_place_prefix">"у входах, позиція "</string>
+    <string name="not_in_the_inputs">"не у входах"</string>
+    <string name="input_hidden">"Приховано"</string>
+    <string name="live_tv_button">"Кнопка «Телеканали»"</string>
     <string name="nothing_found">"Нічого не знайдено."</string>
     <string name="nothing_here_yet_open_a_title_to_add_it">"Поки що тут порожньо. Відкрийте картку, щоб додати її до списку."</string>
     <string name="nothing_matches_this_filter">"За цим фільтром нічого не знайдено."</string>
@@ -256,6 +274,8 @@
     <string name="saved_to_the_menu">"Збережено в меню"</string>
     <string name="screensaver">"Заставка"</string>
     <string name="screensaver_preview">"Заставка, попередній перегляд"</string>
+    <string name="screensaver_ok_hint">"Натисніть OK, щоб дивитися в %1$s · будь-яка інша кнопка закриває"</string>
+    <string name="screensaver_ok_opens_title">"OK на заставці відкриває фільм або серіал"</string>
     <string name="search">"Пошук"</string>
     <string name="side_menu_edit_hint">"«Пошук», «Головна» й «Мій список» завжди вгорі. Натисніть OK на пункті, щоб перемістити, приховати або видалити його."</string>
     <string name="search_movie_via_iptv">"Знайти фільм через IPTV"</string>
@@ -275,6 +295,10 @@
     <string name="settings_2">"Налаштування"</string>
     <string name="shelf">"Обрані застосунки"</string>
     <string name="shelf_edit_hint">"OK — додати або прибрати (до %1$d). ← → — змінити порядок."</string>
+    <string name="shelf_edit_hint_recent">"OK — додати або прибрати (до %1$d). Останній відкритий застосунок — першим."</string>
+    <string name="shelf_order">"Порядок обраного"</string>
+    <string name="shelf_order_manual">"Мій порядок"</string>
+    <string name="shelf_order_recent">"Спочатку недавні"</string>
     <string name="shortcuts">"Ярлики"</string>
     <string name="show">"Серіал"</string>
     <string name="show_every_service">"Показувати всі сервіси"</string>
@@ -296,6 +320,12 @@
     <string name="the_link_expired_go_back_and_open_it_again">"Термін дії посилання минув. Поверніться й відкрийте його знову."</string>
     <string name="the_tvs_own">"Системний"</string>
     <string name="theme">"Тема"</string>
+    <string name="top_of_screen">"Верх екрана"</string>
+    <string name="continue_watching">"Продовжити перегляд"</string>
+    <string name="watch_nothing">"У застосунках немає недодивленого."</string>
+    <string name="watch_needs_permission">"Дозвольте з комп\'ютера: %1$s"</string>
+    <string name="watch_time_left">"залишилося %1$s"</string>
+    <string name="watch_episode">"С%1$s Е%2$s"</string>
     <string name="this_afternoon">"СЬОГОДНІ ВДЕНЬ"</string>
     <string name="this_morning">"СЬОГОДНІ ВРАНЦІ"</string>
     <string name="tmdb_attribution">"Цей продукт використовує API TMDB, але TMDB не схвалила й не сертифікувала його."</string>
@@ -326,6 +356,8 @@
     <string name="trending_this_week">"Популярне за тиждень"</string>
     <string name="trending_today">"Популярне сьогодні"</string>
     <string name="tv_settings">"Налаштування ТВ"</string>
+    <string name="keystone">"Трапеція"</string>
+    <string name="screen_mirroring">"Дублювання екрана"</string>
     <string name="tv_settings_2">"Налаштування ТВ"</string>
     <string name="type">"Тип"</string>
     <string name="type_the_citys_name">"Введіть назву міста"</string>
@@ -375,7 +407,23 @@
     <string name="weather_range_wide">"Макс. %1$s   Мін. %2$s"</string>
     <string name="weather_minutes_ago">"%1$d хв тому"</string>
     <string name="weather_hours_ago">"%1$d год тому"</string>
+    <string name="weather_rain_now">"Зараз дощ"</string>
+    <string name="weather_rain_in_hours">"Дощ через %1$d год"</string>
+    <string name="weather_day_range">"%1$s: максимум %2$s, мінімум %3$s"</string>
+    <string name="next_days_suffix_prefix">" Найближчі дні: "</string>
+    <string name="forecast">"Прогноз"</string>
+    <string name="forecast_next_hours">"Найближчі години"</string>
+    <string name="forecast_next_5_days">"Найближчі 5 днів"</string>
     <string name="duration_minutes">"%1$d хв"</string>
     <string name="duration_hours_minutes">"%1$d год %2$d хв"</string>
+    <string name="sleep_timer">"Таймер сну"</string>
+    <string name="sleep_minutes">"%1$d хв"</string>
+    <string name="sleep_left">"Залишилось %1$d хв"</string>
+    <string name="sleep_unavailable">"Потрібна служба кнопок"</string>
+    <string name="sleep_unavailable_why">"Таймер сну вимикає ТВ через службу кнопок пульта, а вона на цьому ТВ вимкнена. Увімкніть її з комп’ютера: KEY_SERVICE=1 launcher-ui/build-and-install.sh"</string>
+    <string name="sleep_warning">"ТВ вимкнеться через %1$d с"</string>
+    <string name="sleep_more">"Ще 15 хвилин"</string>
+    <string name="sleep_keep_on">"Не вимикати ТВ"</string>
+    <string name="sleep_now">"Вимкнути зараз"</string>
     <string name="stale_quote_prefix">""</string>
 </resources>
