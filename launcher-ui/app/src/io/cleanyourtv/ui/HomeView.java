@@ -3563,11 +3563,11 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         int inTab = Math.max(0, page - tabFirst[tab]);
         boolean kino = !watchMode && kinoSelected();
         kinoConnected = kino && KinoPub.connected(getContext());
-        if (kinoConnected) recs.refreshKino(tab);
+        if (kinoConnected) recs.kino.refresh(tab);
         appRecommendations = kino || !watchMode && !Recs.forApp(recs.all(null), recommendationPackage).isEmpty();
         for (int t = 0; t < 3; t++) {
             if (kino) {
-                tabPicks[t] = kinoConnected ? recs.kinoPicks(t) : java.util.Collections.emptyList();
+                tabPicks[t] = kinoConnected ? recs.kino.picks(t) : java.util.Collections.emptyList();
             } else {
                 List<Recs.Pick> available = watchMode ? java.util.Collections.emptyList() : recs.all(TAB_KIND[t]);
                 tabPicks[t] = appRecommendations ? Recs.forApp(available, recommendationPackage) : available;
@@ -3589,7 +3589,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         // Recs keeps the 10 images used last: this page and the two it can turn to (9), or with the focus on the tabs,
         // this page and the other tabs' first pages, so the next move never waits for a photo.
         for (Recs.Pick p : cards) recs.backdrop(p);
-        if (kino && !cards.isEmpty()) recs.addKinoSeasonCount(cards.get(0));
+        if (kino && !cards.isEmpty()) recs.kino.addSeasonCount(cards.get(0));
         if (pages > 0 && total > 1) {
             List<Recs.Pick> near = new ArrayList<>();
             if (zone == Z_TOP) {
@@ -3724,7 +3724,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             c.drawText(Strings.get(TABS[i]), r.centerX() - p.measureText(Strings.get(TABS[i])) / 2, r.centerY() + Ui.halfCap(p), p);
         }
         if (kinoSelected() && cards.isEmpty()) {
-            int message = kinoConnected ? recs.kinoEmptyMessage(tab) : R.string.connect_kinopub;
+            int message = kinoConnected ? recs.kino.emptyMessage(tab) : R.string.connect_kinopub;
             String text = Strings.get(message);
             float x = Ui.he ? CONTENT_R * k - lCardMeta.measureText(text) : MARGIN * k;
             c.drawText(text, x, (L_CARDS_TOP + 52) * k, lCardMeta);

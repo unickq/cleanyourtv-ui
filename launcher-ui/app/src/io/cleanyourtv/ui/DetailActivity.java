@@ -54,8 +54,7 @@ public class DetailActivity extends Activity {
     private Tmdb.Title title;
     private LinearLayout content;
     private TextView listButton, seenButton, favButton, rateButton;
-    private TextView kinoChipSubtitle;
-    private boolean kinoLookingUp;
+    private final KinoOffer kinoOffer = new KinoOffer(this, main);
     private boolean inList, favorite;
     private int myRating;
 
@@ -476,12 +475,11 @@ public class DetailActivity extends Activity {
         hidePurchases = Prefs.hidePurchases();
         int firstProvider = iptvChip == null ? 0 : 1;
         whereLine.removeViews(firstProvider, whereLine.getChildCount() - firstProvider);
-        kinoChipSubtitle = null;
         if (Providers.installed(this, KinoPub.PLAYER_PACKAGE)) {
-            kinoChipSubtitle = chipSub(kinoSubtitle());
-            View kinoChip = chipBox(chipIcon(KinoPub.PLAYER_PACKAGE), "KinoWatch", kinoChipSubtitle);
-            kinoChip.setOnClickListener(v -> watchKino());
-            whereLine.addView(kinoChip);
+            TextView subtitle = chipSub(kinoOffer.subtitle());
+            View chip = chipBox(chipIcon(KinoPub.PLAYER_PACKAGE), "KinoWatch", subtitle);
+            kinoOffer.bind(chip, subtitle, kind, id, title);
+            whereLine.addView(chip);
         }
         String[][] types = {{"flatrate", Strings.get(R.string.subscription)}, {"free", Strings.get(R.string.free)},
                 {"ads", Strings.get(R.string.free_with_ads)}, {"rent", Strings.get(R.string.rent)}, {"buy", Strings.get(R.string.buy)}};
@@ -620,66 +618,6 @@ public class DetailActivity extends Activity {
         chip.addView(texts);
         TvUi.softFocus(chip, k, 18 * k);
         return chip;
-    }
-
-    private String kinoSubtitle() {
-        return kinoLookingUp ? Strings.get(R.string.searching_kinopub)
-                : Strings.get(R.string.subscription);
-    }
-
-    private void setKinoLookingUp(boolean lookingUp) {
-        kinoLookingUp = lookingUp;
-        if (kinoChipSubtitle != null) kinoChipSubtitle.setText(kinoSubtitle());
-    }
-
-    private void watchKino() {
-        if (kinoLookingUp || title == null) return;
-        if (!KinoPub.connected(this)) {
-            startActivity(new Intent(this, KinoLoginActivity.class));
-            return;
-        }
-        setKinoLookingUp(true);
-        new Thread(() -> {
-            try {
-                List<JSONObject> matches = KinoPub.find(this, kind, id, title.name);
-                main.post(() -> {
-                    if (isFinishing() || isDestroyed()) return;
-                    setKinoLookingUp(false);
-                    if (matches.isEmpty()) {
-                        Toast.makeText(this, Strings.get(R.string.no_exact_imdb_match_found_in_kinopub), Toast.LENGTH_LONG).show();
-                    } else if (matches.size() == 1) {
-                        openKino(matches.get(0));
-                    } else {
-                        String[] labels = new String[matches.size()];
-                        for (int n = 0; n < labels.length; n++) {
-                            JSONObject item = matches.get(n);
-                            labels[n] = KinoPub.displayTitle(item.optString("title")) + " (" + item.optInt("year") + ") · "
-                                    + item.optString("quality") + " · " + item.optString("voice");
-                        }
-                        new AlertDialog.Builder(this).setTitle(Strings.get(R.string.choose_kinopub_version))
-                                .setItems(labels, (dialog, which) -> openKino(matches.get(which)))
-                                .setNegativeButton(Strings.get(R.string.cancel_2), null).show();
-                    }
-                });
-            } catch (Exception e) {
-                main.post(() -> {
-                    if (isFinishing() || isDestroyed()) return;
-                    setKinoLookingUp(false);
-                    if (!KinoPub.connected(this)) startActivity(new Intent(this, KinoLoginActivity.class));
-                    else Toast.makeText(this, Strings.get(R.string.kinopub_lookup_failed),
-                            Toast.LENGTH_LONG).show();
-                });
-            }
-        }, "kinopub-lookup").start();
-    }
-
-    private void openKino(JSONObject item) {
-        try {
-            KinoPub.open(this, item.optInt("id"));
-            if (title != null) Tmdb.setSeen(this, title, true);
-        } catch (RuntimeException e) {
-            Toast.makeText(this, Strings.get(R.string.kinowatch_couldnt_open_this_title), Toast.LENGTH_LONG).show();
-        }
     }
 
     /** Opens the title in the app (a Wikidata deep link), or else the app's home. */

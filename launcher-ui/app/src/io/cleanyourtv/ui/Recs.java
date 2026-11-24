@@ -107,11 +107,7 @@ final class Recs {
     private final java.util.Set<String> pending = new java.util.HashSet<>();
     private final java.util.Set<String> asked = new java.util.HashSet<>();   // details(): once per pick and list
     private volatile List<Pick> picks = new ArrayList<>();
-    private final List<List<Pick>> kinoTabs = Arrays.asList(
-            java.util.Collections.emptyList(), java.util.Collections.emptyList(), java.util.Collections.emptyList());
-    private String kinoLanguage = "";
-    private final long[] kinoNextAttempt = new long[3];
-    private final boolean[] kinoLoading = new boolean[3], kinoFailed = new boolean[3];
+    final KinoHomePicks kino;
     private volatile int period = -1;
     private volatile long listAt;
     private volatile boolean fetching;
@@ -122,6 +118,7 @@ final class Recs {
 
     private Recs(Context c) {
         context = c;
+        kino = new KinoHomePicks(c, io, main, this::notifyListeners);
         cache = c.getSharedPreferences("recs", Context.MODE_PRIVATE);
         if (cache.getInt("version", 0) != CACHE_VERSION) cache.edit().clear().putInt("version", CACHE_VERSION).apply();
         try {
@@ -225,80 +222,6 @@ final class Recs {
             if (seen.add(franchise(p.title))) out.add(p);
         }
         return out;
-    }
-
-    List<Pick> kinoPicks(int tab) { return kinoTabs.get(tab); }
-
-    int kinoEmptyMessage(int tab) {
-        if (kinoLoading[tab]) return R.string.loading;
-        return kinoFailed[tab] ? R.string.kinopub_lookup_failed : R.string.nothing_found;
-    }
-
-    /** Only refresh the KinoPub tab the person selected; switching back uses its cached list. */
-    void refreshKino(int tab) {
-        String language = Ui.language;
-        if (!language.equals(kinoLanguage)) {
-            kinoLanguage = language;
-            java.util.Collections.fill(kinoTabs, java.util.Collections.emptyList());
-            Arrays.fill(kinoNextAttempt, 0);
-            Arrays.fill(kinoFailed, false);
-        }
-        long now = android.os.SystemClock.elapsedRealtime();
-        if (kinoLoading[tab] || now < kinoNextAttempt[tab]) return;
-        kinoLoading[tab] = true;
-        io.execute(() -> {
-            List<Pick> out = new ArrayList<>();
-            boolean failed = false;
-            try {
-                List<Tmdb.Title> titles = tab == 0 ? KinoPub.fresh(context, true) : KinoPub.popular(context, tab == 1, true);
-                for (Tmdb.Title title : titles) {
-                    Pick pick = new Pick();
-                    pick.id = title.id;
-                    pick.kind = KinoPub.KIND;
-                    pick.title = title.name;
-                    pick.poster = title.poster.isEmpty() ? null : title.poster;
-                    pick.backdrop = title.backdrop.isEmpty() ? pick.poster : title.backdrop;
-                    pick.meta = title.kinoCaption;
-                    pick.kinoNeedsSeasons = title.kinoNeedsSeasons;
-                    pick.pkg = KinoPub.PLAYER_PACKAGE;
-                    pick.detailed = true;
-                    out.add(pick);
-                }
-            } catch (Exception e) {
-                failed = true;
-                AppLog.w("KinoPub home picks: " + e.getClass().getSimpleName());
-            }
-            boolean retry = failed;
-            main.post(() -> {
-                kinoLoading[tab] = false;
-                if (!language.equals(Ui.language)) {
-                    notifyListeners();
-                    return;
-                }
-                if (!retry) kinoTabs.set(tab, out);
-                kinoFailed[tab] = retry;
-                kinoNextAttempt[tab] = android.os.SystemClock.elapsedRealtime()
-                        + (retry ? 60_000 : 15 * 60_000);
-                notifyListeners();
-            });
-        });
-    }
-
-    void addKinoSeasonCount(Pick pick) {
-        if (!pick.kinoNeedsSeasons) return;
-        pick.kinoNeedsSeasons = false;
-        io.execute(() -> {
-            try {
-                int seasons = KinoPub.seasonCount(context, pick.id);
-                if (seasons <= 0) return;
-                main.post(() -> {
-                    pick.meta += " · " + Strings.quantity(R.plurals.seasons, seasons);
-                    notifyListeners();
-                });
-            } catch (Exception e) {
-                AppLog.w("KinoPub season count: " + e.getClass().getSimpleName());
-            }
-        });
     }
 
     static List<Pick> forApp(List<Pick> source, String pkg) {
