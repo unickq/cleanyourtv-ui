@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="remote_key_service">Кнопки приложений на пульте (Netflix, YouTube, Prime Video, TCL Channel) открывают приложения, выбранные в CleanYourTV UI, поверх любого приложения. Служба считывает только эти кнопки.</string>
+    <string name="remote_key_service">Кнопки приложений на пульте (Netflix, YouTube, Prime Video, TCL Channel) открывают приложения, выбранные в CleanYourTV UI, поверх любого приложения; через службу таймер сна выключает ТВ. Служба считывает только эти кнопки.</string>
     <string name="a_pngs_url_empty_the_apps_icon">"URL изображения PNG (пусто — иконка приложения)"</string>
     <string name="account_services_and_the_menus_order">"Аккаунт, сервисы и порядок пунктов меню"</string>
     <string name="acting">"Актёрские работы"</string>
@@ -410,13 +410,55 @@
     <string name="watch_next_allow">Разрешить доступ к списку просмотров</string>
     <string name="watch_next_empty">Приложения пока не добавили ничего для продолжения просмотра.</string>
     <string name="watch_next_unavailable">Список просмотров Android TV недоступен.</string>
-    <string name="rain_now">Сейчас дождь</string>
-    <string name="rain_in_hours">Дождь через %1$d ч</string>
-    <string name="no_hdmi_inputs">Входы HDMI не найдены</string>
-    <string name="use_hdmi_for_live_tv">Открывать этот HDMI через «Прямой эфир»</string>
-    <string name="restore_live_tv">Восстановить прямой эфир</string>
     <string name="my_quotes">Мои котировки</string>
     <string name="add_currency_pair">Добавить валютную пару</string>
     <string name="invalid_currency_pair">Введи валютную пару, например EUR/RON.</string>
     <string name="duplicate_currency_pair">Эта пара уже в списке.</string>
+    <string name="system_apps_in_all_apps">"Показывать системные приложения"</string>
+    <string name="at_power_on">"При включении"</string>
+    <string name="power_on_tv">"На усмотрение ТВ"</string>
+    <string name="app_store">"Магазин приложений"</string>
+    <string name="add_app_store_button">"Добавить кнопку магазина"</string>
+    <string name="remove_app_store_button">"Убрать кнопку магазина"</string>
+    <string name="now_playing_announce">"Сейчас играет: %1$s"</string>
+    <string name="now_playing_hint">"Название, исполнитель и приложение. Ничего не покидает ТВ."</string>
+    <string name="now_playing_hint_not_allowed">"Разрешите с компьютера: NOW_PLAYING=1."</string>
+    <string name="now_playing_not_allowed">"Не разрешено"</string>
+    <string name="now_playing_widget">"Виджет «Сейчас играет»"</string>
+    <string name="live_tv_button">"Кнопка «Телеканалы»"</string>
+    <string name="screensaver_ok_hint">"Нажмите OK, чтобы смотреть в %1$s · любая другая кнопка закрывает"</string>
+    <string name="screensaver_ok_opens_title">"OK на заставке открывает фильм или сериал"</string>
+    <string name="shelf_order">"Порядок избранного"</string>
+    <string name="shelf_order_manual">"Мой порядок"</string>
+    <string name="shelf_order_recent">"Сначала недавние"</string>
+    <string name="top_of_screen">"Верх экрана"</string>
+    <string name="watch_nothing">"В приложениях нет недосмотренного."</string>
+    <string name="watch_needs_permission">"Разрешите с компьютера: %1$s"</string>
+    <string name="watch_time_left">"осталось %1$s"</string>
+    <string name="watch_episode">"С%1$s Э%2$s"</string>
+    <string name="keystone">"Трапеция"</string>
+    <string name="screen_mirroring">"Дублирование экрана"</string>
+    <string name="weather_rain_now">"Сейчас дождь"</string>
+    <string name="weather_rain_in_hours">"Дождь через %1$d ч"</string>
+    <string name="forecast">"Прогноз"</string>
+    <string name="forecast_next_hours">"Ближайшие часы"</string>
+    <string name="forecast_next_5_days">"Ближайшие 5 дней"</string>
+    <string name="sleep_minutes">"%1$d мин"</string>
+    <string name="sleep_left">"Осталось %1$d мин"</string>
+    <string name="sleep_unavailable">"Нужна служба кнопок"</string>
+    <string name="sleep_warning">"ТВ выключится через %1$d с"</string>
+    <string name="sleep_more">"Ещё 15 минут"</string>
+    <string name="sleep_keep_on">"Не выключать ТВ"</string>
+    <string name="sleep_now">"Выключить сейчас"</string>
+    <string name="inputs_edit_hint">"OK — показать или скрыть вход. ← → — изменить порядок."</string>
+    <string name="input_hidden">"Скрыт"</string>
+    <string name="shelf_edit_hint_recent">"OK — добавить или убрать (до %1$d). Последнее открытое приложение — первым."</string>
+    <string name="sleep_timer">"Таймер сна"</string>
+    <string name="sleep_unavailable_why">"Таймер сна выключает ТВ через службу кнопок пульта, а она на этом ТВ выключена. Включите её с компьютера: KEY_SERVICE=1 launcher-ui/build-and-install.sh"</string>
+    <string name="apps_settings">"Настройки приложений"</string>
+    <string name="power_on_hint">"Только после полного включения, не после режима ожидания."</string>
+    <string name="in_the_inputs_place_prefix">"во входах, позиция "</string>
+    <string name="not_in_the_inputs">"не во входах"</string>
+    <string name="weather_day_range">"%1$s: максимум %2$s, минимум %3$s"</string>
+    <string name="next_days_suffix_prefix">" Ближайшие дни: "</string>
 </resources>

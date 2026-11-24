@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">CleanYourTV UI</string>
-    <string name="remote_key_service">Lets the app buttons on the remote (Netflix, YouTube, Prime Video, TCL Channel) open the apps you picked in CleanYourTV UI, from any app. It only reads those buttons.</string>
+    <string name="remote_key_service">Lets the app buttons on the remote (Netflix, YouTube, Prime Video, TCL Channel) open the apps you picked in CleanYourTV UI, from any app, and lets the sleep timer turn the TV off. It only reads those buttons.</string>
     <string name="a_pngs_url_empty_the_apps_icon">"A PNG\'s URL (empty: the app\'s icon)"</string>
     <string name="account_services_and_the_menus_order">"Account, services and the menu\'s order"</string>
     <string name="acting">"Acting"</string>
@@ -409,13 +409,55 @@
     <string name="watch_next_allow">Allow access to Continue Watching</string>
     <string name="watch_next_empty">No apps have shared anything to continue watching yet.</string>
     <string name="watch_next_unavailable">The Android TV viewing list is unavailable.</string>
-    <string name="rain_now">Rain now</string>
-    <string name="rain_in_hours">Rain in %1$d h</string>
-    <string name="no_hdmi_inputs">No HDMI inputs found</string>
-    <string name="use_hdmi_for_live_tv">Open this HDMI input from Live TV</string>
-    <string name="restore_live_tv">Restore Live TV</string>
     <string name="my_quotes">My quotes</string>
     <string name="add_currency_pair">Add currency pair</string>
     <string name="invalid_currency_pair">Enter a currency pair like EUR/RON.</string>
     <string name="duplicate_currency_pair">This pair is already on the list.</string>
+    <string name="system_apps_in_all_apps">"System apps in All Apps"</string>
+    <string name="at_power_on">"At power-on"</string>
+    <string name="power_on_tv">"TV\'s choice"</string>
+    <string name="app_store">"App Store"</string>
+    <string name="add_app_store_button">"Add the App Store button"</string>
+    <string name="remove_app_store_button">"Remove the App Store button"</string>
+    <string name="now_playing_announce">"Now playing: %1$s"</string>
+    <string name="now_playing_hint">"Title, artist and app of what plays. Nothing leaves the TV."</string>
+    <string name="now_playing_hint_not_allowed">"Allow it from a computer with NOW_PLAYING=1."</string>
+    <string name="now_playing_not_allowed">"Not allowed"</string>
+    <string name="now_playing_widget">"Now Playing widget"</string>
+    <string name="live_tv_button">"Live TV button"</string>
+    <string name="screensaver_ok_hint">"Press OK to watch on %1$s · any other button to close"</string>
+    <string name="screensaver_ok_opens_title">"OK on the screensaver opens the title"</string>
+    <string name="shelf_order">"Shelf order"</string>
+    <string name="shelf_order_manual">"My order"</string>
+    <string name="shelf_order_recent">"Last opened first"</string>
+    <string name="top_of_screen">"Top of the screen"</string>
+    <string name="watch_nothing">"Nothing half-watched in your apps."</string>
+    <string name="watch_needs_permission">"Allow it from a computer: %1$s"</string>
+    <string name="watch_time_left">"%1$s left"</string>
+    <string name="watch_episode">"S%1$s E%2$s"</string>
+    <string name="keystone">"Keystone"</string>
+    <string name="screen_mirroring">"Screen Mirroring"</string>
+    <string name="weather_rain_now">"Raining now"</string>
+    <string name="weather_rain_in_hours">"Rain in %1$d h"</string>
+    <string name="forecast">"Forecast"</string>
+    <string name="forecast_next_hours">"Next hours"</string>
+    <string name="forecast_next_5_days">"Next 5 days"</string>
+    <string name="sleep_minutes">"%1$d min"</string>
+    <string name="sleep_left">"%1$d min left"</string>
+    <string name="sleep_unavailable">"Needs the key service"</string>
+    <string name="sleep_warning">"The TV turns off in %1$d s"</string>
+    <string name="sleep_more">"15 more minutes"</string>
+    <string name="sleep_keep_on">"Keep the TV on"</string>
+    <string name="sleep_now">"Turn off now"</string>
+    <string name="inputs_edit_hint">"OK shows or hides an input. ← → change the order."</string>
+    <string name="input_hidden">"Hidden"</string>
+    <string name="shelf_edit_hint_recent">"OK adds or removes (up to %1$d). The last one opened comes first."</string>
+    <string name="sleep_timer">"Sleep Timer"</string>
+    <string name="sleep_unavailable_why">"The sleep timer turns the TV off through the remote buttons service, which is off on this TV. Turn it on from a computer: KEY_SERVICE=1 launcher-ui/build-and-install.sh"</string>
+    <string name="apps_settings">"App Settings"</string>
+    <string name="power_on_hint">"Only after a full start, not from standby."</string>
+    <string name="in_the_inputs_place_prefix">"in the inputs, place "</string>
+    <string name="not_in_the_inputs">"not in the inputs"</string>
+    <string name="weather_day_range">"%1$s: high %2$s, low %3$s"</string>
+    <string name="next_days_suffix_prefix">" Next days: "</string>
 </resources>

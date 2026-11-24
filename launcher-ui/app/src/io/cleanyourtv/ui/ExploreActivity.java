@@ -314,6 +314,8 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     }
 
     @Override protected void onDestroy() {
+        if (watchArt != null) watchArt.close();
+        watchButtons.clear();
         io.shutdownNow();
         super.onDestroy();
     }
@@ -830,6 +832,11 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     // MARK: - Pages
 
     private void showPage(String id) {
+        if (watchArt != null) {
+            watchArt.close();
+            watchArt = null;
+            watchButtons.clear();
+        }
         current = id;
         pageAt = android.os.SystemClock.uptimeMillis() + 1;
         int gen = ++generation;
@@ -967,6 +974,18 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     }
 
     private int watchNextRequest;
+    private final java.util.Map<TextView, WatchNext.Item> watchButtons = new java.util.LinkedHashMap<>();
+    private WatchArt watchArt;
+
+    private void updateWatchArt() {
+        for (java.util.Map.Entry<TextView, WatchNext.Item> row : watchButtons.entrySet()) {
+            Bitmap picture = watchArt.get(row.getValue());
+            if (picture == null) continue;
+            android.graphics.drawable.BitmapDrawable art = new android.graphics.drawable.BitmapDrawable(getResources(), picture);
+            art.setBounds(0, 0, picture.getWidth(), picture.getHeight());
+            row.getKey().setCompoundDrawablesRelative(art, null, null, null);
+        }
+    }
 
     private void refreshWatchNext(int gen) {
         int request = ++watchNextRequest;
@@ -979,26 +998,30 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
                     rows.removeViews(1, rows.getChildCount() - 1);
                     status.setText(Strings.get(R.string.watch_next_empty));
                     status.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+                    watchButtons.clear();
+                    if (watchArt != null) watchArt.close();
+                    watchArt = new WatchArt(this, this::updateWatchArt, false);
+                    watchArt.setSize(Math.round(100 * k), Math.round(100 * k));
                     for (WatchNext.Item item : items) {
                         String caption = item.title + " · " + item.app;
-                        if (item.progress >= 0) caption += " · " + item.progress + "%";
+                        if (item.progress() >= 0) caption += " · " + Math.round(item.progress() * 100) + "%";
                         TextView button = TvUi.button(this, k, caption, v -> openWatchNext(item));
                         button.setSingleLine(true);
                         button.setEllipsize(TextUtils.TruncateAt.END);
-                        if (item.artwork != null) {
-                            int width = Math.max(1, item.artwork.getIntrinsicWidth());
-                            int height = Math.max(1, item.artwork.getIntrinsicHeight());
-                            float scale = 100 * k / Math.max(width, height);
-                            item.artwork.setBounds(0, 0, Math.max(1, Math.round(width * scale)),
-                                    Math.max(1, Math.round(height * scale)));
-                            button.setCompoundDrawablesRelative(item.artwork, null, null, null);
-                            button.setCompoundDrawablePadding(Math.round(20 * k));
-                        }
+                        try {
+                            android.graphics.drawable.Drawable icon = getPackageManager().getApplicationIcon(item.pkg);
+                            int size = Math.round(100 * k);
+                            icon.setBounds(0, 0, size, size);
+                            button.setCompoundDrawablesRelative(icon, null, null, null);
+                        } catch (PackageManager.NameNotFoundException ignored) {}
                         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                                 Math.round(980 * k), ViewGroup.LayoutParams.WRAP_CONTENT);
                         lp.topMargin = Math.round(16 * k);
                         rows.addView(button, lp);
+                        button.setCompoundDrawablePadding(Math.round(20 * k));
+                        watchButtons.put(button, item);
                     }
+                    updateWatchArt();
                     if (restoreFocus) focusPage();
                 });
             } catch (RuntimeException e) {
@@ -1012,9 +1035,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     }
 
     private void openWatchNext(WatchNext.Item item) {
-        try {
-            startActivity(item.resume);
-        } catch (ActivityNotFoundException | SecurityException e) {
+        if (!WatchNext.open(this, item)) {
             Toast.makeText(this, Strings.get(R.string.couldnt_open_prefix) + item.title, Toast.LENGTH_SHORT).show();
         }
     }
