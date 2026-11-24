@@ -158,7 +158,6 @@
     <string name="kinopub_lookup_failed">"Помилка пошуку в KinoPub. Перевірте з’єднання або заново підключіть обліковий запис KinoPub."</string>
     <string name="kinowatch_couldnt_open_this_title">"KinoWatch не вдалося відкрити цей фільм або серіал"</string>
     <string name="label_12_hour">"12 годин"</string>
-    <string name="label_1_season">"1 сезон"</string>
     <string name="label_24_hour">"24 години"</string>
     <string name="label_24h_change">"зміна за 24 год"</string>
     <string name="language">"Мова"</string>
@@ -236,8 +235,6 @@
     <string name="kinowatch_tile_hint">"Відкрийте картку фільму або серіалу й виберіть KinoWatch у розділі «Де дивитися»."</string>
     <string name="open_anyway">"Усе одно відкрити"</string>
     <string name="open_kino_watch_device_sign_in_and_enter_this_code">"Перейдіть на kino.watch/device, увійдіть в обліковий запис і введіть цей код:"</string>
-    <string name="opens_prefix">"відкриває "</string>
-    <string name="opens_the_title_in_prefix">"відкриває в "</string>
     <string name="original">"Початковий"</string>
     <string name="save_category_filter_hint">"Виберіть категорії та рік, а потім збережіть фільтр у меню"</string>
     <string name="pick_something_in_the_filter_first">"Спочатку виберіть параметри фільтра."</string>
@@ -277,7 +274,6 @@
     <string name="removed_from_my_list">"Прибрано з мого списку"</string>
     <string name="rent">"Прокат"</string>
     <string name="reviews">"Відгуки"</string>
-    <string name="s">"-ті"</string>
     <string name="save">"Зберегти"</string>
     <string name="save_changes">"Зберегти зміни"</string>
     <string name="save_to_menu">"Зберегти в меню"</string>
@@ -293,7 +289,6 @@
     <string name="searching_kinopub">"Пошук у KinoPub…"</string>
     <string name="season_prefix">"Сезон "</string>
     <string name="seasons">"Сезони"</string>
-    <string name="seasons_suffix">" сезонів"</string>
     <string name="see_more">"Показати ще"</string>
     <string name="seen">"Переглянуто"</string>
     <string name="seen_2">"Переглянуто"</string>
@@ -326,14 +321,12 @@
     <string name="iptv_search_unavailable">"Застосунок не відповів на пошук. Усе одно відкрити його чи вибрати інший у розділі «Налаштування → Сервіси»?"</string>
     <string name="kinopub_activation_expired">"Термін дії коду минув. Поверніться й знову відкрийте «Обліковий запис KinoPub»."</string>
     <string name="the_link_expired_go_back_and_open_it_again">"Термін дії посилання минув. Поверніться й відкрийте його знову."</string>
-    <string name="the_prefix">""</string>
     <string name="the_tvs_own">"Системний"</string>
     <string name="theme">"Тема"</string>
     <string name="this_afternoon">"СЬОГОДНІ ВДЕНЬ"</string>
     <string name="this_morning">"СЬОГОДНІ ВРАНЦІ"</string>
     <string name="tmdb_attribution">"Цей продукт використовує API TMDB, але TMDB не схвалила й не сертифікувала його."</string>
     <string name="this_tv_cant_open_the_apps_settings">"На цьому телевізорі не вдалося відкрити налаштування застосунку."</string>
-    <string name="titles_data_from_tmdb_suffix">" назв · дані TMDB"</string>
     <string name="tmdb_account">"Обліковий запис TMDB"</string>
     <string name="tmdb_account_connected">"Обліковий запис TMDB підключено"</string>
     <string name="tmdb_account_prefix">"Обліковий запис TMDB: "</string>

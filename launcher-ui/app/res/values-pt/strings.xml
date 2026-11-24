@@ -135,7 +135,6 @@
     <string name="keywords">"Palavras-chave"</string>
     <string name="kids">"Infantil"</string>
     <string name="label_12_hour">"12 horas"</string>
-    <string name="label_1_season">"1 temporada"</string>
     <string name="label_24_hour">"24 horas"</string>
     <string name="label_24h_change">"variação em 24 h"</string>
     <string name="language">"Idioma"</string>
@@ -209,8 +208,6 @@
     <string name="on_the_shelf_place_prefix">"na prateleira, posição "</string>
     <string name="on_your_services_data_from_tmdb">"Nos seus serviços · dados do TMDB"</string>
     <string name="open_anyway">"Abrir assim mesmo"</string>
-    <string name="opens_prefix">"abre "</string>
-    <string name="opens_the_title_in_prefix">"abre o título em "</string>
     <string name="save_category_filter_hint">"Escolha categorias e ano no filtro; salve para ter no menu"</string>
     <string name="pick_something_in_the_filter_first">"Escolha algo no filtro antes de salvar."</string>
     <string name="service_app_settings_hint">"Escolha qual app abre cada serviço. As sugestões e o Explorar usam só os serviços com app, a não ser que você mostre todos."</string>
@@ -249,7 +246,6 @@
     <string name="removed_from_my_list">"Removido da Minha lista"</string>
     <string name="rent">"Aluguel"</string>
     <string name="reviews">"Resenhas"</string>
-    <string name="s">""</string>
     <string name="save">"Salvar"</string>
     <string name="save_changes">"Salvar alterações"</string>
     <string name="save_to_menu">"Salvar no menu"</string>
@@ -264,7 +260,6 @@
     <string name="searching">"Procurando…"</string>
     <string name="season_prefix">"Temporada "</string>
     <string name="seasons">"Temporadas"</string>
-    <string name="seasons_suffix">" temporadas"</string>
     <string name="see_more">"Ver mais"</string>
     <string name="seen">"Assistido"</string>
     <string name="seen_2">"Já assisti"</string>
@@ -296,14 +291,12 @@
     <string name="that_doesnt_look_like_a_tmdb_key">"Essa chave não parece do TMDB."</string>
     <string name="iptv_search_unavailable">"O app não respondeu à busca. Quer abrir assim mesmo, ou trocar o app em Ajustes › Serviços?"</string>
     <string name="the_link_expired_go_back_and_open_it_again">"O link expirou. Volte e abra de novo."</string>
-    <string name="the_prefix">"Anos "</string>
     <string name="the_tvs_own">"Padrão da TV"</string>
     <string name="theme">"Tema"</string>
     <string name="this_afternoon">"PARA ESTA TARDE"</string>
     <string name="this_morning">"PARA ESTA MANHÃ"</string>
     <string name="tmdb_attribution">"Usa a API do TMDB, sem endosso ou certificação do TMDB."</string>
     <string name="this_tv_cant_open_the_apps_settings">"Esta TV não abre os ajustes do app."</string>
-    <string name="titles_data_from_tmdb_suffix">" títulos · dados do TMDB"</string>
     <string name="tmdb_account">"Conta TMDB"</string>
     <string name="tmdb_account_connected">"Conta TMDB conectada"</string>
     <string name="tmdb_account_prefix">"Conta TMDB: "</string>
