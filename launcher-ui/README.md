@@ -132,6 +132,7 @@ logged, never guessed. [`config.example.json`](config.example.json) has them all
 | `show_crypto` | `true` / `false` | The quotes widget (Binance). |
 | `status_icons` | `true` / `false` | Small icons next to the round buttons at the top for Wi-Fi or Ethernet, mounted removable storage, and Bluetooth audio output. On by default. |
 | `app_recommendations` | `true` / `false` | Filter home picks by the focused streaming app. Falls back to general picks when the app has none. On by default in this fork. |
+| `group_explore_services` | `true` / `false` | Group Explore’s side menu into catalogue sections, installed services and other services. On by default in this fork. |
 | `currency` | three letters (`USD`, `BRL`, `EUR`, `TRY`) | The quotes' currency. |
 | `buttons` | `{ "s395": action, "k4062": action }` | A remote button by scancode (`s`) or keycode (`k`), from `tools/tv.py 'getevent -lt'`. |
 | `app_keys` | `["scan:395:com.app", "4062:com.app"]` | CleanYourTV's form of `buttons`; long presses (`hold:`) are skipped. |
@@ -155,6 +156,9 @@ Google Speech Services is preferred when installed, with the system speech activ
 Recognition is handled by that app using its own permissions.
 With `"app_recommendations": true` in config.json, focusing a streaming app on the home shelf filters the top recommendation cards to that app’s existing picks.
 When it has no picks, the general recommendations are shown. Continue Watching keeps its own cards.
+With `"group_explore_services": true` in config.json, explore’s side menu groups catalogue sections and saved filters first, followed by installed services.
+With **Show every service** enabled, unavailable services form a final group. Dividers separate the groups,
+and items can be reordered within their group. The menu shows installed services and up to twelve unavailable services.
 
 ## remote.json
 

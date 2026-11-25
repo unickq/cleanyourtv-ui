@@ -127,7 +127,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     private View shade, overlay;
     private String current = HOME;
     private boolean fromBookmark, menuOpen, resumedOnce;
-    private boolean kinoConnected, menuShowsAll;
+    private boolean kinoConnected, menuShowsAll, menuGrouped;
     private View beforeMenu, beforeOverlay;
     private int generation;
     private final Map<String, TextView> menuItems = new LinkedHashMap<>();
@@ -299,12 +299,10 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
         if (resumedOnce && KINOWATCH.equals(current) && kinoConnected != KinoPub.connected(this)) showPage(KINOWATCH);
         if (resumedOnce && WATCH_NEXT.equals(current) && WatchNext.allowed(this)) refreshWatchNext(generation);
         if (resumedOnce && Tmdb.hasKey()) {   // back from a title page: the list, the picks and what was seen may have changed
-            if (providersStamp != Prefs.providersStamp()) {
+            if (providersStamp != Prefs.providersStamp() || menuShowsAll != Prefs.showAllProviders()
+                    || menuGrouped != Prefs.groupExploreServices()) {
                 services = null;
                 loadMenuServices();
-            } else if (menuShowsAll != Prefs.showAllProviders()) {
-                fillMenu();
-                if (SETTINGS.equals(current)) showPage(SETTINGS);
             }
             refreshPersonal();
             TvUi.refreshSeen(page);
@@ -476,6 +474,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
         for (int i = 0; i < menuMovable.getChildCount(); i++) menuItems.values().remove(menuMovable.getChildAt(i).getTag());
         menuMovable.removeAllViews();
         menuShowsAll = Prefs.showAllProviders();
+        menuGrouped = Prefs.groupExploreServices();
         Set<String> hidden = hidden();
         int previousGroup = -1;
         for (String id : menuOrder()) {
@@ -718,6 +717,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     }
 
     private int menuGroup(String id) {
+        if (!Prefs.groupExploreServices()) return 0;
         if (KINOWATCH.equals(id)) return 1;
         if (!id.startsWith(SERVICE)) return 0;
         Service s = service(id);
@@ -730,7 +730,8 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
         int limit = Prefs.showAllProviders() ? 12 : 0;
         for (String id : order()) {
             // shortcut: keep the regional tail short until the menu renders rows on demand.
-            if (menuGroup(id) == 2 && withoutApp++ >= limit) continue;
+            Service service = id.startsWith(SERVICE) ? service(id) : null;
+            if (service != null && !service.installed && withoutApp++ >= limit) continue;
             visible.add(id);
         }
         return visible;
