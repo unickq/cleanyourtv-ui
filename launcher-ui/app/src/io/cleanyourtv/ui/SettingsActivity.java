@@ -301,7 +301,7 @@ public class SettingsActivity extends Activity {
         private RectF rowBox(int row) {
             float top, height;
             if (screen == MAIN) {
-                top = LIST_TOP + row * (ROW_H + ROW_GAP);
+                top = LIST_TOP + row * (ROW_H + ROW_GAP) - mainScroll();
                 height = ROW_H;
             } else {
                 top = LIST_TOP + 20 + row * (screen == HOME_SETTINGS ? listPitch() : LIST_ROW_H + LIST_ROW_GAP);
@@ -417,10 +417,19 @@ public class SettingsActivity extends Activity {
             if (screen == MAIN) drawMain(c); else if (screen == PICKER) drawPicker(c); else if (screen == SHELF_EDIT) drawShelfEditor(c); else drawList(c);
         }
 
+        private float mainScroll() {
+            float bottom = LIST_TOP + (focus + 1) * (ROW_H + ROW_GAP);
+            if (focus == rowCount() - 1) bottom += 124;   // include the recommendations and TMDB credit
+            return Math.max(0, bottom - 1008);
+        }
+
         private void drawMain(Canvas c) {
             String[] labels = {Strings.get(R.string.screensaver), Strings.get(R.string.home_settings),
                     Strings.get(R.string.shelf), Strings.get(R.string.inputs), Strings.get(R.string.remote_buttons),
                     Strings.get(R.string.services), Strings.get(R.string.tmdb_account), Strings.get(R.string.kinopub_account), Strings.get(R.string.sleep_timer), Strings.get(R.string.tv_settings)};
+            c.save();
+            c.clipRect((LIST_X - 20) * k, (LIST_TOP - 12) * k, (LIST_R + 20) * k, 1040 * k);
+            c.translate(0, -mainScroll() * k);
             for (int i = 0; i < labels.length; i++) {
                 float y = (LIST_TOP + i * (ROW_H + ROW_GAP)) * k;
                 rowRect.set(LIST_X * k, y, LIST_R * k, y + ROW_H * k);
@@ -444,6 +453,7 @@ public class SettingsActivity extends Activity {
                 }
             }
             drawRecs(c, (LIST_TOP + labels.length * (ROW_H + ROW_GAP) + 46) * k);
+            c.restore();
         }
 
         private String sleepValue() {
