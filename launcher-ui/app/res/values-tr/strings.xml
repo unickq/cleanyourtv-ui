@@ -403,4 +403,5 @@
     </plurals>
     <string name="voice_search">"Sesli arama"</string>
     <string name="voice_search_unavailable">"Bu televizyonda sesli arama kullanılamıyor."</string>
+    <string name="mute_navigation_sounds">"Gezinme seslerini kapat"</string>
 </resources>

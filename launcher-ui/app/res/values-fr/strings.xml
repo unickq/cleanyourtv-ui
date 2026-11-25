@@ -374,4 +374,5 @@
     </plurals>
     <string name="voice_search">"Recherche vocale"</string>
     <string name="voice_search_unavailable">"La recherche vocale est indisponible sur ce téléviseur."</string>
+    <string name="mute_navigation_sounds">"Couper les sons de navigation"</string>
 </resources>

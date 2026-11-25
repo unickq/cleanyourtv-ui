@@ -188,4 +188,5 @@
     <string name="next_days_suffix_prefix">" Nächste Tage: "</string>
     <string name="voice_search">"Sprachsuche"</string>
     <string name="voice_search_unavailable">"Die Sprachsuche ist auf diesem Fernseher nicht verfügbar."</string>
+    <string name="mute_navigation_sounds">"Navigationstöne stummschalten"</string>
 </resources>

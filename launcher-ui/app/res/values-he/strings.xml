@@ -382,4 +382,5 @@
     </plurals>
     <string name="voice_search">"חיפוש קולי"</string>
     <string name="voice_search_unavailable">"חיפוש קולי אינו זמין בטלוויזיה זו."</string>
+    <string name="mute_navigation_sounds">"השתקת צלילי ניווט"</string>
 </resources>

@@ -119,6 +119,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private final HomeData data;
     private final Recs recs;
     private final NowPlaying.Watch playing;
+    private final Click click;
     private static final long BG_FOLLOW_MS = 500;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final SharedPreferences ui;
@@ -517,6 +518,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         data = HomeData.get(a);
         recs = Recs.get(a);
         playing = new NowPlaying.Watch(a, this::onPlaying);
+        click = new Click(a);
         ui = a.getSharedPreferences("home-ui", Context.MODE_PRIVATE);
         tvInputs = (TvInputManager) a.getSystemService(Context.TV_INPUT_SERVICE);
         connectivity = (ConnectivityManager) a.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -648,6 +650,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             if (launcherApps != null) launcherApps.unregisterCallback(packages);
         } catch (RuntimeException ignored) {
         }
+        click.release();
     }
 
     /** Starting state (Home pressed while the home screen is showing): first app focused, drawer and sheet closed. */
@@ -2699,6 +2702,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         } else {
             return;
         }
+        click.move();
     }
 
     private void move(int dx, int dy) {
@@ -2783,6 +2787,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
                 break;
         }
         retarget(false);
+        click.move();
     }
 
     private static int nearest(RectF[] rects, float x) {
@@ -2814,6 +2819,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         if (next == gridIndex) return;
         gridIndex = next;
         retargetGrid(false);
+        click.move();
         gridDirty = true;
     }
 
@@ -2833,6 +2839,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         } else if (zone == Z_HERO) {
             Recs.Pick p = currentPick();
             if (p == null) return;
+            click.open();
             if (KinoPub.KIND.equals(p.kind)) {
                 try {
                     KinoPub.open(getContext(), p.id);
@@ -2861,6 +2868,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         } else if (zone == Z_WATCH) {
             if (watchIndex >= watching.size()) return;
             WatchNext.Item w = watching.get(watchIndex);
+            click.open();
 
             if (!WatchNext.open(activity, w)) {
                 showToast(Strings.get(R.string.couldnt_open_prefix) + (w.app == null || w.app.isEmpty() ? w.pkg : w.app) + ".");
@@ -2869,6 +2877,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         } else if (zone == Z_CARDS) {
             Recs.Pick p = cardIndex < cards.size() ? cards.get(cardIndex) : null;
             if (p == null) return;
+            click.open();
             if (KinoPub.KIND.equals(p.kind)) {
                 try {
                     KinoPub.open(getContext(), p.id);
@@ -2884,6 +2893,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             it = shelf.get(shelfIndex);
             r = tileRects[shelfIndex];
         }
+        click.open();
         if (it.kind == HomeApps.ALL_APPS) {
             openSheet();
             return;
@@ -2964,6 +2974,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         getLocationInWindow(at);
         android.graphics.Rect anchor = new android.graphics.Rect(Math.round(r.left) + at[0], Math.round(r.top) + at[1],
                 Math.round(r.right) + at[0], Math.round(r.bottom) + at[1]);
+        click.open();
 
         TvUi.popover(activity, this, anchor, it.label, labels.toArray(new String[0]), which -> actions.get(which).run(), night < 0.5f);
     }
@@ -3010,6 +3021,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         getLocationInWindow(at);
         android.graphics.Rect anchor = new android.graphics.Rect(Math.round(r.left) + at[0], Math.round(r.top) + at[1],
                 Math.round(r.right) + at[0], Math.round(r.bottom) + at[1]);
+        click.open();
         TvUi.popover(activity, this, anchor, it.label, labels.toArray(new String[0]), which -> actions.get(which).run(), night < 0.5f);
     }
 
@@ -3026,6 +3038,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         liftIndex = reorderTop ? topIndex - 3 : shelfIndex;
         reorderAt = SystemClock.uptimeMillis();
         moveLift.target = 1;
+        click.open();
         showToast(Strings.get(R.string.to_move_ok_to_drop_back_to_cancel));
         retarget(false);    // TalkBack reads "Moving <app>, position i of n"
     }
@@ -3057,6 +3070,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
                 } else {
                     if (backDown && !e.isCanceled()) {
                         cancelReorder(false);
+                        click.move();
                     }
                     backDown = false;
                 }
@@ -3086,6 +3100,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             reorderAnim = statusDirty = true;
             wake();
             retarget(false);
+            click.move();
 
             return;
         }
@@ -3112,6 +3127,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         reorderAnim = true;
         wake();
         retarget(false);
+        click.move();
     }
 
     /** OK: drops the app where it is and saves the shelf's new order. */
@@ -3124,6 +3140,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         boolean changed = false;
         for (int i = 0; i < items.size() && !changed; i++) changed = items.get(i) != reorderOrigin.get(i);
         reorderOrigin = null;
+        click.open();
         retarget(false);
         if (!changed) return;
         if (reorderTop) {
@@ -3387,6 +3404,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             gridIndex = i;
             retargetGrid(false);
             gridDirty = true;
+            click.move();
             return;
         }
         if (sheetOpen || reordering) return;
@@ -3429,6 +3447,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         }
         zone = group;
         retarget(false);
+        click.move();
     }
 
     private static String label(List<HomeApps.Item> list, int i) {
@@ -4182,6 +4201,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
                 return false;
         }
         retarget(false);
+        click.move();
         return true;
     }
 

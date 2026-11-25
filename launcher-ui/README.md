@@ -133,6 +133,7 @@ logged, never guessed. [`config.example.json`](config.example.json) has them all
 | `status_icons` | `true` / `false` | Small icons next to the round buttons at the top for Wi-Fi or Ethernet, mounted removable storage, and Bluetooth audio output. On by default. |
 | `app_recommendations` | `true` / `false` | Filter home picks by the focused streaming app. Falls back to general picks when the app has none. On by default in this fork. |
 | `group_explore_services` | `true` / `false` | Group Explore’s side menu into catalogue sections, installed services and other services. On by default in this fork. |
+| `mute_navigation_sounds` | `true` / `false` | Mute the home screen’s focus and open sounds. On by default in this fork. Also under Home Settings. |
 | `currency` | three letters (`USD`, `BRL`, `EUR`, `TRY`) | The quotes' currency. |
 | `buttons` | `{ "s395": action, "k4062": action }` | A remote button by scancode (`s`) or keycode (`k`), from `tools/tv.py 'getevent -lt'`. |
 | `app_keys` | `["scan:395:com.app", "4062:com.app"]` | CleanYourTV's form of `buttons`; long presses (`hold:`) are skipped. |

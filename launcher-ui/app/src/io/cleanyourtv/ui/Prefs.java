@@ -241,6 +241,8 @@ final class Prefs {
     static void setAppRecommendations(boolean on) { put("appRecommendations", on); }
     static boolean groupExploreServices() { return sp().getBoolean("groupExploreServices", true); }
     static void setGroupExploreServices(boolean on) { put("groupExploreServices", on); }
+    static boolean muteNavigationSounds() { return sp().getBoolean("muteNavigationSounds", true); }
+    static void setMuteNavigationSounds(boolean on) { put("muteNavigationSounds", on); }
 
     // MARK: - Widgets and coins
 

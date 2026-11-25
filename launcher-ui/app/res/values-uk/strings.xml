@@ -516,4 +516,5 @@
         <item quantity="other">%1$d сезонів</item>
     </plurals>
     <string name="voice_search_unavailable">"На цьому телевізорі голосовий пошук недоступний."</string>
+    <string name="mute_navigation_sounds">"Вимкнути звуки навігації"</string>
 </resources>

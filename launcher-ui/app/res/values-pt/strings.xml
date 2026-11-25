@@ -479,4 +479,5 @@
         <item quantity="other">%1$d temporadas</item>
     </plurals>
     <string name="voice_search_unavailable">"A pesquisa por voz não está disponível nesta TV."</string>
+    <string name="mute_navigation_sounds">"Silenciar sons de navegação"</string>
 </resources>

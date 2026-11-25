@@ -636,6 +636,7 @@ public class SettingsActivity extends Activity {
             l.add("Solana");
             if (dollar()) l.add(Strings.get(R.string.dollar));
             l.add(Strings.get(R.string.my_quotes));
+            l.add(Strings.get(R.string.mute_navigation_sounds));
             return l.toArray(new String[0]);
         }
 
@@ -665,8 +666,9 @@ public class SettingsActivity extends Activity {
             v[QUOTES_ROW] = onOff(Prefs.quotes());
             v[NOW_PLAYING_ROW] = playingValue();
             // No quotes widget, nowhere to show prices: the coins read as off (and stay locked) until it is back on.
-            for (int i = COIN_ROWS; i < v.length - 1; i++) v[i] = onOff(Prefs.quotes() && Prefs.coin(i - COIN_ROWS));
-            v[v.length - 1] = "›";
+            for (int i = COIN_ROWS; i < v.length - 2; i++) v[i] = onOff(Prefs.quotes() && Prefs.coin(i - COIN_ROWS));
+            v[v.length - 2] = "›";
+            v[v.length - 1] = onOff(Prefs.muteNavigationSounds());
             return v;
         }
 
@@ -736,7 +738,11 @@ public class SettingsActivity extends Activity {
                 Prefs.setButton(b.id, appPkgs.get(next));
                 return;
             }
-            if (focus >= settingLabels().length - 1) return;
+            if (focus == settingLabels().length - 1) {
+                Prefs.setMuteNavigationSounds(!Prefs.muteNavigationSounds());
+                return;
+            }
+            if (focus == settingLabels().length - 2) return;
             switch (focus) {
                 case 0: {
                     int at = java.util.Arrays.asList(LANGUAGES).indexOf(Prefs.language());
@@ -1165,7 +1171,7 @@ public class SettingsActivity extends Activity {
                 rowRect.set(LIST_X * k, y, LIST_R * k, y + rowH * k);
                 float f = drawRowBackground(c, i);
                 rowLabel.setColor(blend(0xF2FFFFFF, INK, f));
-                boolean locked = i == NOW_PLAYING_ROW ? !playingAllowed : i >= COIN_ROWS && i < labels.length - 1 && !Prefs.quotes();
+                boolean locked = i == NOW_PLAYING_ROW ? !playingAllowed : i >= COIN_ROWS && i < labels.length - 2 && !Prefs.quotes();
                 rowValue.setColor(blend(locked ? 0x59FFFFFF : 0xB3FFFFFF, locked ? 0x591C1C1E : 0xB31C1C1E, f));
                 if (locked) rowLabel.setColor(blend(0x73FFFFFF, 0x731C1C1E, f));
                 float base = rowRect.centerY() + Ui.halfCap(rowLabel);
@@ -1235,7 +1241,7 @@ public class SettingsActivity extends Activity {
                 return;
             } else if (screen == REMOTE_KEYS) {
                 openPicker(keysScroll + focus + 1);
-            } else if (screen == HOME_SETTINGS && focus == settingLabels().length - 1) {
+            } else if (screen == HOME_SETTINGS && focus == settingLabels().length - 2) {
                 editQuotes();
                 return;
             } else if (screen == HOME_SETTINGS && focus == CITY_ROW) {

@@ -30,6 +30,7 @@
   "status_icons": true,
   "app_recommendations": true,
   "group_explore_services": true,
+  "mute_navigation_sounds": true,
   "currency": "BRL",
   "buttons": {
     "s395": "tmdb:watchlist",
