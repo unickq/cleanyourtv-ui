@@ -49,6 +49,7 @@ the core bigger or change how it behaves. You install an add-on only if you want
 | [Panchang](hindu-calendar/) | Today's Hindu panchang read at sunrise: tithi, nakshatra, yoga and karana with the time each ends, sunrise and sunset, the day's Rahu Kala, Yamaganda, Gulika and Abhijit, the month and day number in one of five regional calendars (north Indian, Gujarati, Marathi, Tamil, Bengali) for a city you pick, and a month grid with each day's tithi and nakshatra, worked out offline | [@Your-Voldemort](https://github.com/Your-Voldemort) | Noble Skiodo NS 2K SmartTV (Skyworth sunnyvale), Android TV 14 | None | <img src="hindu-calendar/screenshot.jpg" width="240" alt="Panchang on a TV"> |
 | [Hindi Panchang](hindi-panchang/) | Offline Hindu Lunar Panchang and Vikram Samvat calendar with 12 monthly artworks, 3D Moon orbs, Tithi, festivals, Suvichar, bundled cities, and manual coordinates | [@anujmishra11](https://github.com/anujmishra11) | Hisense 65U8G (Android TV 10) | None | <img src="hindi-panchang/screenshot.jpg" width="240" alt="Hindi Panchang on a TV"> |
 | [Floating Clock](floating-clock/) | A minimalist floating `HH:mm.ss` clock screensaver and card: the first five digits float gently in place and drift slowly upward only across a carry, while the last second digit flows continuously upward as a swaying, fading stream over a subtle ambient glow, drawn live on the TV with no network | [@shirui-liu](https://github.com/shirui-liu) | TCL Google TV (TCL C02_2K_GLB, Android 9) | None | <img src="floating-clock/screenshot.jpg" width="240" alt="Floating Clock on a TV"> |
+| [Open Movies](watch-provider-example/) | The reference watch provider (not a card): four Blender Foundation open movies (CC BY) that CleanYourTV UI lists under Where to watch, a full-screen player, and a list of the four in the TV's apps | [@matheus-caldeira](https://github.com/matheus-caldeira) | Not yet tested on a real TV | `INTERNET` (the films' video files only) | <img src="watch-provider-example/screenshot.jpg" width="240" alt="Open Movies on a TV"> |
 
 A widget, an info tile, a storage or smart-home card: if it can live as its own small app, it can live
 here. See the rules below.
@@ -130,6 +131,12 @@ TV_HOST=<tv ip> tools/venv/bin/python -I tools/manage.py install weather
   so an add-on whose manifest asks for something the column leaves out is a bug in this page.
   The rules in [`docs/modules.md`](../docs/modules.md)
   apply: no telemetry without an opt-in, no ads, your own art.
+- **What the repo does not take.** An add-on built on an accessibility service, notification access, READ_LOGS, an overlay, a boot
+  receiver, WRITE_SECURE_SETTINGS, input injection or a LAN server stays out (the rule lives in
+  [`MAINTAINER.md`](../.github/maintainer/MAINTAINER.md)), and a design that needs one lives in its own repository, with one row in
+  [`SHOWCASE.md`](../SHOWCASE.md) instead. Network access is asked for in an issue or on the pull
+  request before the folder is written, and an add-on whose point is switching wireless debugging
+  back on is held rather than merged.
 - **Tested on a real TV.** Say which one in the README and in the table above.
 - **A screenshot.** `addons/<name>/screenshot.jpg`: the add-on on a real TV, its card in the grid or
   its own screen, as a JPEG, 16:9 (1280×720 is plenty) and under 300 KB, shown in the table's

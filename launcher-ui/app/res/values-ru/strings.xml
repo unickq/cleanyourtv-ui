@@ -69,14 +69,12 @@
     <string name="couldnt_save_the_rating_prefix">"Не удалось сохранить оценку: "</string>
     <string name="couldnt_search_now_prefix">"Не удалось выполнить поиск: "</string>
     <string name="create">"Создать"</string>
-    <string name="created_by_prefix">"Создатели: "</string>
     <string name="crypto">"Криптовалюты"</string>
     <string name="dark">"Тёмная"</string>
     <string name="data_from_tmdb">"Данные TMDB"</string>
     <string name="decade">"%1$s-е"</string>
     <string name="details">"Подробнее"</string>
     <string name="died_prefix">"Дата смерти: "</string>
-    <string name="directed_by_prefix">"Режиссёр: "</string>
     <string name="directing">"Режиссура"</string>
     <string name="disconnect">"Отключить"</string>
     <string name="disconnect_kinopub">"Отключить KinoPub"</string>
@@ -162,7 +160,6 @@
     <string name="language">"Язык"</string>
     <string name="light">"Светлая"</string>
     <string name="like_prefix">"Похожее на "</string>
-    <string name="list">"Список"</string>
     <string name="list_created">"Список создан"</string>
     <string name="list_name">"Название списка"</string>
     <string name="live_tv">"Телеканалы"</string>
@@ -366,7 +363,6 @@
     <string name="where_to_watch">"Где смотреть"</string>
     <string name="wi_fi_network">"Wi-Fi и сеть"</string>
     <string name="writing">"Сценарии"</string>
-    <string name="you_may_also_like">"Вам также может понравиться"</string>
     <string name="your_rating_for_prefix">"Ваша оценка для "</string>
     <string name="your_rating_prefix">"Ваша оценка: "</string>
     <string name="your_ratings">"Ваши оценки"</string>
@@ -379,12 +375,6 @@
         <item quantity="few">%1$d названия</item>
         <item quantity="many">%1$d названий</item>
         <item quantity="other">%1$d названий</item>
-    </plurals>
-    <plurals name="seasons">
-        <item quantity="one">%1$d сезон</item>
-        <item quantity="few">%1$d сезона</item>
-        <item quantity="many">%1$d сезонов</item>
-        <item quantity="other">%1$d сезонов</item>
     </plurals>
 
     <string name="weather_clear_day">"Ясно"</string>
@@ -461,4 +451,10 @@
     <string name="not_in_the_inputs">"не во входах"</string>
     <string name="weather_day_range">"%1$s: максимум %2$s, минимум %3$s"</string>
     <string name="next_days_suffix_prefix">" Ближайшие дни: "</string>
+    <plurals name="seasons">
+        <item quantity="one">%1$d сезон</item>
+        <item quantity="few">%1$d сезона</item>
+        <item quantity="many">%1$d сезонов</item>
+        <item quantity="other">%1$d сезонов</item>
+    </plurals>
 </resources>
