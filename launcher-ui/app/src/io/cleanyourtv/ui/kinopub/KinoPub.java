@@ -131,6 +131,11 @@ final class KinoPub {
 
     static List<Tmdb.Title> popular(Context c, boolean movies) throws Exception { return popular(c, movies, false); }
 
+    static List<Tmdb.Title> hot(Context c, boolean movies) throws Exception {
+        String type = movies ? "movie" : "serial";
+        return shelfTitles(items(c, "/v1/items/hot?type=" + type + "&perpage=20"), true);
+    }
+
     static List<Tmdb.Title> popular(Context c, boolean movies, boolean homeArtwork) throws Exception {
         String type = movies ? "movie" : "serial";
         return shelfTitles(items(c, "/v1/items/popular?type=" + type + "&perpage=20"), homeArtwork);

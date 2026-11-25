@@ -52,7 +52,7 @@ final class KinoHomePicks {
             List<Recs.Pick> out = new ArrayList<>();
             boolean failed = false;
             try {
-                List<Tmdb.Title> titles = tab == 0 ? KinoPub.fresh(context, true) : KinoPub.popular(context, tab == 1, true);
+                List<Tmdb.Title> titles = tab == 0 ? KinoPub.fresh(context, true) : KinoPub.hot(context, tab == 1);
                 for (Tmdb.Title title : titles) {
                     Recs.Pick pick = new Recs.Pick();
                     pick.id = title.id;
