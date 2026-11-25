@@ -154,8 +154,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
 
     // At the top: tabs (0 to 2) and icon-only buttons (3 on, HomeApps.topButtons); the three cards
     private int tab, topIndex, cardIndex;
-    private String recommendationPackage = "";
-    private boolean appRecommendations;
     private int widgetIndex;    // with TalkBack on, the drawer's weather (0) or quotes (1) card can take the focus
     private List<Recs.Pick> cards = new ArrayList<>();
     private String recommendationPackage = "";

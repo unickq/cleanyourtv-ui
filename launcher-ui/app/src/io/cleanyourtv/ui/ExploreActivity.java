@@ -71,7 +71,6 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     private static final String[] MOVABLE = {TOP, MOVIES, SHOWS, KIDS, ANIME, CATS};
     private static final int VOICE_SEARCH = 1;
     private static final long HERO_MS = 9000;
-    private static final int VOICE_SEARCH = 1;
     private static final int HERO_H = 720, HERO_BLEED = 144, INSET = 120;
 
     /** A filter label and the TMDB constraints it represents. */
@@ -2001,7 +2000,6 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
 
     private EditText searchField;
     private Filter filter;
-    private EditText searchField;
     private String savedId;
     private LinearLayout chips;
     private TvUi.Grid results;
