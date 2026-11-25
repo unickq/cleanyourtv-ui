@@ -372,4 +372,6 @@
         <item quantity="one">%1$d saison</item>
         <item quantity="other">%1$d saisons</item>
     </plurals>
+    <string name="voice_search">"Recherche vocale"</string>
+    <string name="voice_search_unavailable">"La recherche vocale est indisponible sur ce téléviseur."</string>
 </resources>

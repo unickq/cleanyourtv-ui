@@ -401,4 +401,6 @@
         <item quantity="one">%1$d sezon</item>
         <item quantity="other">%1$d sezon</item>
     </plurals>
+    <string name="voice_search">"Sesli arama"</string>
+    <string name="voice_search_unavailable">"Bu televizyonda sesli arama kullanılamıyor."</string>
 </resources>

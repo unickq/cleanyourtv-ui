@@ -186,4 +186,6 @@
     <string name="not_in_the_inputs">"nicht in den Eingängen"</string>
     <string name="weather_day_range">"%1$s: Höchstwert %2$s, Tiefstwert %3$s"</string>
     <string name="next_days_suffix_prefix">" Nächste Tage: "</string>
+    <string name="voice_search">"Sprachsuche"</string>
+    <string name="voice_search_unavailable">"Die Sprachsuche ist auf diesem Fernseher nicht verfügbar."</string>
 </resources>

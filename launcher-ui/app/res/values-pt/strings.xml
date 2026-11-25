@@ -107,7 +107,6 @@
     <string name="getting_ready">"Preparando…"</string>
     <string name="go_to_settings">"Ir pra Ajustes"</string>
     <string name="google_photos">"Fotos do Google"</string>
-    <string name="google_voice_search_is_unavailable_on_this_tv">"Busca por voz do Google indisponível nesta TV."</string>
     <string name="hdmi_inputs">"Entradas HDMI"</string>
     <string name="hidden">"Oculto"</string>
     <string name="hide">"Ocultar “"</string>
@@ -479,4 +478,5 @@
         <item quantity="one">%1$d temporada</item>
         <item quantity="other">%1$d temporadas</item>
     </plurals>
+    <string name="voice_search_unavailable">"A pesquisa por voz não está disponível nesta TV."</string>
 </resources>

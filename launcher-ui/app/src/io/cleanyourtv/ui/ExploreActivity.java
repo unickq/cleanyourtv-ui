@@ -69,6 +69,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     private static final int WATCH_NEXT_PERMISSION = 43;
     /** The menu's items the person can move or hide, in their first order (services and saved filters follow). */
     private static final String[] MOVABLE = {TOP, MOVIES, SHOWS, KIDS, ANIME, CATS};
+    private static final int VOICE_SEARCH = 1;
     private static final long HERO_MS = 9000;
     private static final int VOICE_SEARCH = 1;
     private static final int HERO_H = 720, HERO_BLEED = 144, INSET = 120;
@@ -1997,6 +1998,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
 
     // MARK: - Search and categories: the same filter
 
+    private EditText searchField;
     private Filter filter;
     private EditText searchField;
     private String savedId;
@@ -2095,13 +2097,15 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
 
     private void startVoiceSearch() {
         Intent speech = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
-                .setPackage("com.google.android.tts")
                 .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+                .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+                .putExtra(RecognizerIntent.EXTRA_LANGUAGE, Ui.locale().toLanguageTag());
+        Intent google = new Intent(speech).setPackage("com.google.android.tts");
+        if (google.resolveActivity(getPackageManager()) != null) speech = google;
         try {
             startActivityForResult(speech, VOICE_SEARCH);
         } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, Strings.get(R.string.google_voice_search_is_unavailable_on_this_tv),
+            Toast.makeText(this, Strings.get(R.string.voice_search_unavailable),
                     Toast.LENGTH_SHORT).show();
         }
     }

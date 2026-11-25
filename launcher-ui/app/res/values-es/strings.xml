@@ -188,4 +188,6 @@
     <string name="not_in_the_inputs">"fuera de las entradas"</string>
     <string name="weather_day_range">"%1$s: máxima %2$s, mínima %3$s"</string>
     <string name="next_days_suffix_prefix">" Próximos días: "</string>
+    <string name="voice_search">"Búsqueda por voz"</string>
+    <string name="voice_search_unavailable">"La búsqueda por voz no está disponible en este televisor."</string>
 </resources>

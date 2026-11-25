@@ -380,4 +380,6 @@
         <item quantity="one">%1$d עונה</item>
         <item quantity="other">%1$d עונות</item>
     </plurals>
+    <string name="voice_search">"חיפוש קולי"</string>
+    <string name="voice_search_unavailable">"חיפוש קולי אינו זמין בטלוויזיה זו."</string>
 </resources>

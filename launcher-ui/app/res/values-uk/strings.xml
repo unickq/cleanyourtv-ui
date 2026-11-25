@@ -126,7 +126,6 @@
     <string name="getting_ready">"Підготовка…"</string>
     <string name="go_to_settings">"До налаштувань"</string>
     <string name="google_photos">"Google Фото"</string>
-    <string name="google_voice_search_is_unavailable_on_this_tv">"Голосовий пошук Google недоступний на цьому телевізорі."</string>
     <string name="hdmi_inputs">"Входи HDMI"</string>
     <string name="hidden">"Приховано"</string>
     <string name="hide">"Приховати «"</string>
@@ -516,4 +515,5 @@
         <item quantity="many">%1$d сезонів</item>
         <item quantity="other">%1$d сезонів</item>
     </plurals>
+    <string name="voice_search_unavailable">"На цьому телевізорі голосовий пошук недоступний."</string>
 </resources>
