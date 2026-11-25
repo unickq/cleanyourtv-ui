@@ -3606,22 +3606,20 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
                 retarget(false);
             }
         }
-        // Recs keeps the 10 images used last: this page and the two it can turn to (9), or with the focus on the tabs,
-        // this page and the other tabs' first pages, so the next move never waits for a photo.
-        for (Recs.Pick p : cards) recs.backdrop(p);
+        // Visible cards lead the image queue; the neighbours warm in the background within its memory budget.
+        List<Recs.Pick> near = new ArrayList<>();
         if (kino && !cards.isEmpty()) recs.kino.addSeasonCount(cards.get(0));
         if (pages > 0 && total > 1) {
-            List<Recs.Pick> near = new ArrayList<>();
             if (zone == Z_TOP) {
                 for (int t = 0; t < 3; t++) if (t != tab && tabFirst[t + 1] > tabFirst[t]) near.addAll(pageCards(tabFirst[t]));
             } else {
                 near.addAll(pageCards(Math.floorMod(page + 1, total)));
                 near.addAll(pageCards(Math.floorMod(page - 1, total)));
             }
-            for (Recs.Pick p : near) recs.backdrop(p);
-            near.addAll(cards);
-            if (!kino) recs.details(near);
         }
+        recs.prepareImages(recommendationPackage, cards, near);
+        near.addAll(cards);
+        if (!kino) recs.details(near);
         updateCardBackdrop();
         heroDirty = true;
         spoken.focusMoved();    // new picks under the focused card
