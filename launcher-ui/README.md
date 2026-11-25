@@ -131,6 +131,7 @@ logged, never guessed. [`config.example.json`](config.example.json) has them all
 | `weather` | `true` / `false` | The weather widget. |
 | `show_crypto` | `true` / `false` | The quotes widget (Binance). |
 | `status_icons` | `true` / `false` | Small icons next to the round buttons at the top for Wi-Fi or Ethernet, mounted removable storage, and Bluetooth audio output. On by default. |
+| `app_recommendations` | `true` / `false` | Filter home picks by the focused streaming app. Falls back to general picks when the app has none. On by default in this fork. |
 | `currency` | three letters (`USD`, `BRL`, `EUR`, `TRY`) | The quotes' currency. |
 | `buttons` | `{ "s395": action, "k4062": action }` | A remote button by scancode (`s`) or keycode (`k`), from `tools/tv.py 'getevent -lt'`. |
 | `app_keys` | `["scan:395:com.app", "4062:com.app"]` | CleanYourTV's form of `buttons`; long presses (`hold:`) are skipped. |
@@ -152,6 +153,8 @@ later joins at the end, and one it stops listing keeps its place.
 Explore’s Search page has a microphone button. Recognized speech fills the query field and starts the search.
 Google Speech Services is preferred when installed, with the system speech activity as a fallback.
 Recognition is handled by that app using its own permissions.
+With `"app_recommendations": true` in config.json, focusing a streaming app on the home shelf filters the top recommendation cards to that app’s existing picks.
+When it has no picks, the general recommendations are shown. Continue Watching keeps its own cards.
 
 ## remote.json
 

@@ -226,7 +226,10 @@ final class Recs {
 
     static List<Pick> forApp(List<Pick> source, String pkg) {
         List<Pick> out = new ArrayList<>();
-        if (pkg != null) for (Pick pick : source) if (pkg.equals(pick.pkg)) out.add(pick);
+        if (pkg == null) return out;
+        for (Pick pick : source) {
+            if (pkg.equals(pick.pkg)) out.add(pick);
+        }
         return out;
     }
 

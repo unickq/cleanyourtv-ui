@@ -153,6 +153,8 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
 
     // At the top: tabs (0 to 2) and icon-only buttons (3 on, HomeApps.topButtons); the three cards
     private int tab, topIndex, cardIndex;
+    private String recommendationPackage = "";
+    private boolean appRecommendations;
     private int widgetIndex;    // with TalkBack on, the drawer's weather (0) or quotes (1) card can take the focus
     private List<Recs.Pick> cards = new ArrayList<>();
     private String recommendationPackage = "";
@@ -2149,7 +2151,8 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private void retarget(boolean snap) {
         if (!sheetOpen && zone == Z_SHELF && shelfIndex < shelf.size()) {
             String pkg = shelf.get(shelfIndex).pkg;
-            if (pkg != null && !pkg.equals(recommendationPackage)) {
+            if (pkg == null || (!Prefs.appRecommendations() && !KinoPub.PLAYER_PACKAGE.equals(pkg))) pkg = "";
+            if (!pkg.equals(recommendationPackage)) {
                 if (kinoSelected() || KinoPub.PLAYER_PACKAGE.equals(pkg)) showBackdrop(null);
                 recommendationPackage = pkg;
                 page = tabFirst[tab];
@@ -3564,7 +3567,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         boolean kino = !watchMode && kinoSelected();
         kinoConnected = kino && KinoPub.connected(getContext());
         if (kinoConnected) recs.kino.refresh(tab);
-        appRecommendations = kino || !watchMode && !Recs.forApp(recs.all(null), recommendationPackage).isEmpty();
+        appRecommendations = kino || Prefs.appRecommendations() && !watchMode && !Recs.forApp(recs.all(null), recommendationPackage).isEmpty();
         for (int t = 0; t < 3; t++) {
             if (kino) {
                 tabPicks[t] = kinoConnected ? recs.kino.picks(t) : java.util.Collections.emptyList();

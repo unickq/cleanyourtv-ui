@@ -237,6 +237,8 @@ final class Prefs {
     }
 
     static void setFxPairs(List<String> pairs) { put("fxPairs", String.join(",", pairs)); }
+    static boolean appRecommendations() { return sp().getBoolean("appRecommendations", true); }
+    static void setAppRecommendations(boolean on) { put("appRecommendations", on); }
 
     // MARK: - Widgets and coins
 
