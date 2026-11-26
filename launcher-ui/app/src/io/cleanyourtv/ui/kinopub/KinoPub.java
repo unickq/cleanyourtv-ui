@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.IOException;
@@ -48,6 +49,17 @@ final class KinoPub {
 
     static JSONObject poll(String code) throws Exception {
         return oauth("/oauth2/device", "grant_type=device_token&code=" + enc(code));
+    }
+
+    /** Best effort, off the UI thread: naming the device must never prevent sign-in. */
+    static void notifyDevice(Context c) {
+        try {
+            request("/v1/device/notify", "title=" + enc("Android CleanYourTV UI")
+                    + "&hardware=" + enc(Build.MANUFACTURER + " " + Build.DEVICE + " (" + Build.MODEL + ")")
+                    + "&software=" + enc("Android" + Build.VERSION.RELEASE), accessToken(c));
+        } catch (Exception e) {
+            AppLog.w("KinoPub device info: " + e.getClass().getSimpleName());
+        }
     }
 
     static synchronized void save(Context c, JSONObject tokens) throws Exception {
@@ -156,6 +168,7 @@ final class KinoPub {
         List<Tmdb.Title> out = new ArrayList<>();
         Set<Integer> seen = new LinkedHashSet<>();
         for (JSONObject item : items) {
+            if (homeArtwork && (isAnime(item) || isRussianProduction(item))) continue;
             int id = item.optInt("id");
             String name = displayTitle(item.optString("title"));
             if (id <= 0 || name.isEmpty() || "null".equals(name) || !seen.add(id)) continue;
@@ -188,6 +201,29 @@ final class KinoPub {
             out.add(title);
         }
         return out;
+    }
+
+    /** KinoPub's Anime genre is 25; cartoons have their own genre (23). */
+    private static boolean isAnime(JSONObject item) {
+        JSONArray genres = item.optJSONArray("genres");
+        for (int i = 0; genres != null && i < genres.length(); i++) {
+            JSONObject genre = genres.optJSONObject(i);
+            if (genre != null && genre.optInt("id") == 25) return true;
+        }
+        return false;
+    }
+
+    private static boolean isRussianProduction(JSONObject item) {
+        JSONArray countries = item.optJSONArray("countries");
+        for (int i = 0; countries != null && i < countries.length(); i++) {
+            JSONObject country = countries.optJSONObject(i);
+            if (country == null) continue;
+            String name = country.optString("title").trim();
+            if ("Россия".equalsIgnoreCase(name) || "Росія".equalsIgnoreCase(name)
+                    || "Russia".equalsIgnoreCase(name) || "Российская Федерация".equalsIgnoreCase(name)
+                    || "Russian Federation".equalsIgnoreCase(name)) return true;
+        }
+        return false;
     }
 
     static int seasonCount(Context c, int id) throws Exception {

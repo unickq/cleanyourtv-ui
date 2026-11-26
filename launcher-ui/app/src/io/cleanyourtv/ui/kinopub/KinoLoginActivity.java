@@ -71,6 +71,8 @@ public class KinoLoginActivity extends Activity {
         });
         box.addView(disconnect);
         disconnect.requestFocus();
+        worker = new Thread(() -> KinoPub.notifyDevice(this), "kinopub-device");
+        worker.start();
     }
 
     private void login() {
