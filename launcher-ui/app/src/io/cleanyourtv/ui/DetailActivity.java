@@ -63,6 +63,7 @@ public class DetailActivity extends Activity {
     private int id;
     private Tmdb.Title title;
     private LinearLayout content;
+    private final KinoOffer kinoOffer = new KinoOffer(this, main);
     private TvUi.Action listButton, seenButton, favButton, rateButton, primaryButton, startOverButton, back;
     private View initialFocus, beforeBack, providerStartOver;
     private TextView actionHint;
@@ -73,7 +74,6 @@ public class DetailActivity extends Activity {
     private TvUi.Flow actions;
     private final List<View> providerChips = new ArrayList<>();
     private View providerWatchButton;
-    private TextView noneText;
     private boolean streamingWatch, keyPressed;
     private int providerStamp;
     private int askGeneration;
@@ -228,10 +228,7 @@ public class DetailActivity extends Activity {
         }
         initialFocus = actions.getChildAt(0);
         if (initialFocus != null) initialFocus.requestFocus();
-        new Thread(() -> {
-            java.util.Map<String, String> links = DeepLinks.find(this, kind, id, name);
-            main.post(() -> { if (!isFinishing()) linksKnown(links); });
-        }).start();
+        new Thread(() -> DeepLinks.find(this, kind, id, name)).start();
         askProviders(true);
     }
 
@@ -693,43 +690,117 @@ public class DetailActivity extends Activity {
             JSONArray list = region.optJSONArray(type);
             for (int i = 0; list != null && i < list.length(); i++) {
                 JSONObject p = list.optJSONObject(i);
-                String app = Providers.app(c, p.optInt("provider_id"), p.optString("provider_name"));
-                if (app != null) return new String[] {app, p.optString("provider_name")};
+                String name = p.optString("provider_name");
+                String app = Providers.app(c, p.optInt("provider_id"), name);
+                if (app != null) return new String[] {app, preferredSubscription(c, region, name, type, app)};
             }
         }
         return null;
     }
 
+    private static String preferredSubscription(Context c, JSONObject region, String name, String type, String app) {
+        if (app == null || (!"flatrate".equals(type) && !"ads".equals(type))) return name;
+        JSONArray subscriptions = region.optJSONArray("flatrate");
+        if (subscriptions == null) return name;
+        for (String preferred : preferredSubscriptions(name)) {
+            for (int i = 0; i < subscriptions.length(); i++) {
+                JSONObject offer = subscriptions.optJSONObject(i);
+                if (offer == null) continue;
+                String candidate = offer.optString("provider_name");
+                if (preferred.equalsIgnoreCase(candidate) && app.equals(Providers.app(c, offer.optInt("provider_id"), candidate))) {
+                    return candidate;
+                }
+            }
+        }
+        return name;
+    }
+
+    private static String[] preferredSubscriptions(String name) {
+        switch (name.toLowerCase(Locale.ROOT)) {
+            case "netflix with ads":
+            case "netflix standard with ads":
+                return new String[] {"Netflix"};
+            case "apple tv+":
+                return new String[] {"Apple TV"};
+            case "apple tv plus":
+                return new String[] {"Apple TV", "Apple TV+"};
+            case "apple tv amazon channel":
+            case "apple tv+ amazon channel":
+            case "apple tv plus amazon channel":
+                return new String[] {"Apple TV", "Apple TV+", "Apple TV Plus"};
+            default:
+                return new String[0];
+        }
+    }
+
     private TvUi.Flow whereLine;
+    private TextView whereEmpty;
+    private JSONObject watchRegion;
+    private boolean hideServicesWithoutApps;
+    private boolean hideRentals;
+    private boolean hidePurchases;
     private View iptvChip;
     private String iptvShown = "";
 
     private View whereToWatch(JSONObject region) {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
+        whereEmpty = TvUi.text(this, k, 26, Ui.regular, TvUi.DIM);
+        box.addView(whereEmpty);
         whereLine = new TvUi.Flow(this, Math.round(18 * k), Math.round(18 * k));
         whereLine.setPadding(0, Math.round(14 * k), Math.round(96 * k), Math.round(14 * k));
+        box.addView(whereLine, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        watchRegion = region;
+        refreshProviderChips();
+        showIptvChip();
+        return box;
+    }
+
+    private void refreshProviderChips() {
+        hideServicesWithoutApps = Prefs.hideServicesWithoutApps();
+        hideRentals = Prefs.hideRentals();
+        hidePurchases = Prefs.hidePurchases();
+        int firstProvider = iptvChip == null ? 0 : 1;
+        whereLine.removeViews(firstProvider, whereLine.getChildCount() - firstProvider);
+        if (Providers.installed(this, KinoPub.PLAYER_PACKAGE)) {
+            TextView subtitle = chipSub(kinoOffer.subtitle());
+            View chip = chipBox(chipIcon(KinoPub.PLAYER_PACKAGE), "KinoWatch", subtitle);
+            kinoOffer.bind(chip, subtitle, kind, id, title);
+            whereLine.addView(chip);
+        }
         String[][] types = {{"flatrate", Strings.get(R.string.subscription)}, {"free", Strings.get(R.string.free)},
                 {"ads", Strings.get(R.string.free_with_ads)}, {"rent", Strings.get(R.string.rent)}, {"buy", Strings.get(R.string.buy)}};
         Set<String> added = new HashSet<>();
+        boolean offersHidden = false;
         for (String[] type : types) {
-            JSONArray list = region == null ? null : region.optJSONArray(type[0]);
+            JSONArray list = watchRegion == null ? null : watchRegion.optJSONArray(type[0]);
+            if ((hideRentals && "rent".equals(type[0])) || (hidePurchases && "buy".equals(type[0]))) {
+                offersHidden |= list != null && list.length() > 0;
+                continue;
+            }
             for (int i = 0; list != null && i < list.length(); i++) {
                 JSONObject p = list.optJSONObject(i);
                 int pid = p.optInt("provider_id");
                 if (!added.add(pid + type[0])) continue;
-                whereLine.addView(chip(pid, p.optString("provider_name"), p.optString("logo_path"), type[1]));
+                String name = p.optString("provider_name");
+                if (Providers.showInWhereToWatch(this, name, hideServicesWithoutApps)) {
+                    String app = Providers.app(this, pid, name);
+                    if (name.equals(preferredSubscription(this, watchRegion, name, type[0], app))) {
+                        whereLine.addView(chip(app, name, p.optString("logo_path"), type[1]));
+                    }
+                }
             }
         }
-        if (whereLine.getChildCount() == 0) {
-            TextView none = TvUi.text(this, k, 26, Ui.regular, TvUi.DIM);
-            none.setText(Strings.get(R.string.not_on_any_streaming_service_in_the_region_right_now));
-            noneText = none;
-            box.addView(none);
+        for (int i = providerChips.size() - 1; i >= 0; i--) whereLine.addView(providerChips.get(i), firstProvider);
+        if (offersHidden) {
+            whereEmpty.setText(Strings.get(R.string.no_viewing_options_match_your_filters));
+        } else if (hideServicesWithoutApps) {
+            whereEmpty.setText(Strings.get(R.string.no_official_streaming_apps_installed));
+        } else {
+            whereEmpty.setText(Strings.get(R.string.not_on_any_streaming_service_in_the_region_right_now));
         }
-        box.addView(whereLine, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        showIptvChip();
-        return box;
+        whereEmpty.setVisibility(whereLine.getChildCount() == firstProvider ? View.VISIBLE : View.GONE);
+        whereLine.setVisibility(whereLine.getChildCount() == 0 ? View.GONE : View.VISIBLE);
     }
 
     /** The IPTV app picked in Settings › Services leads the row. IPTV has no catalog TMDB can check, so the chip
@@ -739,13 +810,8 @@ public class DetailActivity extends Activity {
         iptvShown = Prefs.iptvPlayer();
         iptvChip = null;
         if (!iptvShown.isEmpty() && Providers.installed(this, iptvShown)) {
-            ImageView img = new ImageView(this);
-            try {
-                img.setImageDrawable(getPackageManager().getApplicationIcon(iptvShown));
-            } catch (PackageManager.NameNotFoundException ignored) {
-            }
             String pkg = iptvShown;
-            iptvChip = chipBox(img, Providers.label(this, pkg), chipSub("movie".equals(kind)
+            iptvChip = chipBox(chipIcon(pkg), Providers.label(this, pkg), chipSub("movie".equals(kind)
                     ? Strings.get(R.string.search_movie_via_iptv) : Strings.get(R.string.search_show_via_iptv)));
             iptvChip.setOnClickListener(v -> searchOrOpen(pkg));
             whereLine.addView(iptvChip, 0);
@@ -790,12 +856,12 @@ public class DetailActivity extends Activity {
                 .show();
     }
 
-    private View chip(int pid, String name, String logo, String type) {
-        String app = Providers.app(this, pid, name);
+    private View chip(String app, String name, String logo, String type) {
         ImageView img = new ImageView(this);
         Images.load(img, logo.isEmpty() ? null : Tmdb.LOGO + logo);
-        TextView s = chipSub(type + "  ·  " + (app != null ? Strings.get(R.string.opens_prefix) + Providers.label(this, app) : Strings.get(R.string.no_app_on_the_tv)));
-        if (app != null) chipNotes.add(new Object[] {app, s, type});
+        String subtitle = type;
+        if (app == null) subtitle += "  ·  " + Strings.get(R.string.no_app_on_the_tv);
+        TextView s = chipSub(subtitle);
         View chip = chipBox(img, name, s);
         chip.setOnClickListener(v -> {
             if (app != null) watch(app);
@@ -809,6 +875,15 @@ public class DetailActivity extends Activity {
         s.setText(text);
         s.setPadding(0, Math.round(6 * k), 0, 0);
         return s;
+    }
+
+    private ImageView chipIcon(String pkg) {
+        ImageView img = new ImageView(this);
+        try {
+            img.setImageDrawable(getPackageManager().getApplicationIcon(pkg));
+        } catch (PackageManager.NameNotFoundException ignored) {
+        }
+        return img;
     }
 
     /** The shape every "Onde assistir" chip shares: a logo, the name, and a dim line under it. */
@@ -844,16 +919,6 @@ public class DetailActivity extends Activity {
                 Recent.note(this, pkg);   // the shelf's "Last opened first" counts it too (#63)
             });
         }).start();
-    }
-
-    private final List<Object[]> chipNotes = new ArrayList<>();   // {app, subtitle view, kind of offer}
-
-    /** Once the links are known: the chips that open the title itself say so. */
-    private void linksKnown(java.util.Map<String, String> links) {
-        for (Object[] n : chipNotes) {
-            String app = (String) n[0];
-            if (links.containsKey(app)) ((TextView) n[1]).setText(n[2] + "  ·  " + Strings.get(R.string.opens_the_title_in_prefix) + Providers.label(this, app));
-        }
     }
 
     private void background(String failure, Task task) {
@@ -1094,14 +1159,14 @@ public class DetailActivity extends Activity {
                 String resume = WatchProviders.resumeText(item);
                 if (resume != null) parts.add(resume);
                 String sub = TextUtils.join("  ·  ", parts);
-                View chip = chipBox(img, p.label, chipSub(sub.isEmpty() ? Strings.get(R.string.opens_prefix) + p.appLabel : sub));
+                View chip = chipBox(img, p.label, chipSub(sub));
                 chip.setOnClickListener(v -> openProviderItem(item));
                 whereLine.addView(chip, at++);
                 providerChips.add(chip);
             }
         }
         firstProviderItem = first;
-        if (noneText != null) noneText.setVisibility(providerChips.isEmpty() ? View.VISIBLE : View.GONE);
+        whereEmpty.setVisibility(whereLine.getChildCount() == (iptvChip == null ? 0 : 1) ? View.VISIBLE : View.GONE);
         whereLine.setVisibility(whereLine.getChildCount() == 0 ? View.GONE : View.VISIBLE);
         if (first != null && !streamingWatch && actions != null) {
             WatchProviders.Item item = first;
@@ -1136,8 +1201,14 @@ public class DetailActivity extends Activity {
     @Override protected void onStart() {
         super.onStart();
         if (stopped) TvUi.restoreImages(getWindow().getDecorView());
-        if (stopped && whereLine != null && !Prefs.iptvPlayer().equals(iptvShown)) showIptvChip();   // back from Settings › Services
-        if (stopped && baseRequest != null && WatchProviders.stamp() != providerStamp) askProviders(false);   // an app was switched on, off or moved
+        if (stopped && whereLine != null) {
+            if (hideServicesWithoutApps != Prefs.hideServicesWithoutApps() || hideRentals != Prefs.hideRentals()
+                    || hidePurchases != Prefs.hidePurchases()) {
+                refreshProviderChips();
+            }
+            if (!Prefs.iptvPlayer().equals(iptvShown)) showIptvChip();
+        }
+        if (stopped && baseRequest != null && WatchProviders.stamp() != providerStamp) askProviders(false);
         stopped = false;
     }
 }

@@ -2,15 +2,18 @@ package io.cleanyourtv.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -62,9 +65,11 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     static final String EXTRA_SECTION = "section";
     private static final String HOME = "home", SEARCH = "search", LIST = "watchlist", TOP = "top", MOVIES = "movie",
             SHOWS = "tv", KIDS = "kids", ANIME = "anime", CATS = "categories", SETTINGS = "settings", SERVICE = "service:",
-            SAVED = "f:";
+            SAVED = "f:", KINOWATCH = "kinowatch", WATCH_NEXT = "watch_next";
+    private static final int WATCH_NEXT_PERMISSION = 43;
     /** The menu's items the person can move or hide, in their first order (services and saved filters follow). */
     private static final String[] MOVABLE = {TOP, MOVIES, SHOWS, KIDS, ANIME, CATS};
+    private static final int VOICE_SEARCH = 1;
     private static final long HERO_MS = 9000;
     private static final int HERO_H = 720, HERO_BLEED = 144, INSET = 120;
 
@@ -121,22 +126,26 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     private View shade, overlay;
     private String current = HOME;
     private boolean fromBookmark, menuOpen, resumedOnce;
+    private boolean kinoConnected, menuShowsAll, menuGrouped;
     private View beforeMenu, beforeOverlay;
     private int generation;
     private final Map<String, TextView> menuItems = new LinkedHashMap<>();
     private final Map<Integer, View> placed = new HashMap<>();
     private final Map<Integer, String> placedKeys = new HashMap<>();
     private List<Section> sections = new ArrayList<>();
-    private List<Service> services;
+    private volatile List<Service> services;
+    private int providersStamp;
 
-    /** A streaming service with an app: TMDB lists some more than once ("with ads"), so one entry per app. */
+    /** TMDB lists some services more than once ("with ads"), so group those that open the same app. */
     private static final class Service {
         final String key, name, ids, logo;
-        Service(String key, String name, String ids, String logo) {
+        final boolean installed;
+        Service(String key, String name, String ids, String logo, boolean installed) {
             this.key = key;
             this.name = name;
             this.ids = ids;
             this.logo = logo;
+            this.installed = installed;
         }
     }
 
@@ -266,20 +275,34 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
             tilesNear(now);
         });
         if (!Tmdb.hasKey()) {
-            header(Strings.get(R.string.explore), Strings.get(R.string.tmdb_key_missing_build_hint));
+            if (Providers.installed(this, KinoPub.PLAYER_PACKAGE)) showPage(KINOWATCH);
+            else header(Strings.get(R.string.explore), Strings.get(R.string.tmdb_key_missing_build_hint));
             return;
         }
-        io.execute(() -> {
-            services();
-            main.post(() -> { if (!isFinishing()) fillMenu(); });
-        });
-        showPage(fromBookmark ? LIST : HOME);
+        loadMenuServices();
+        String section = fromBookmark ? LIST : HOME;
+        if (state != null && state.getBoolean(SEARCH)) section = SEARCH;
+        if (state != null && state.getBoolean(KINOWATCH) && Providers.installed(this, KinoPub.PLAYER_PACKAGE)) section = KINOWATCH;
+        showPage(section);
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        super.onSaveInstanceState(state);
+        state.putBoolean(SEARCH, SEARCH.equals(current));
+        state.putBoolean(KINOWATCH, KINOWATCH.equals(current));
     }
 
     @Override protected void onResume() {
         super.onResume();
         if (hero != null && !menuOpen) restartHero();
+        if (resumedOnce && KINOWATCH.equals(current) && kinoConnected != KinoPub.connected(this)) showPage(KINOWATCH);
+        if (resumedOnce && WATCH_NEXT.equals(current) && WatchNext.allowed(this)) refreshWatchNext(generation);
         if (resumedOnce && Tmdb.hasKey()) {   // back from a title page: the list, the picks and what was seen may have changed
+            if (providersStamp != Prefs.providersStamp() || menuShowsAll != Prefs.showAllProviders()
+                    || menuGrouped != Prefs.groupExploreServices()) {
+                services = null;
+                loadMenuServices();
+            }
             refreshPersonal();
             TvUi.refreshSeen(page);
         }
@@ -292,6 +315,8 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     }
 
     @Override protected void onDestroy() {
+        if (watchArt != null) watchArt.close();
+        watchButtons.clear();
         main.removeCallbacks(heroTick);   // a carousel step after this would hand work to the closed pool and crash
         io.shutdownNow();
         super.onDestroy();
@@ -423,11 +448,8 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
         menuItem(menu, SEARCH, Strings.get(R.string.search), null);
         menuItem(menu, HOME, Strings.get(R.string.home), null);
         menuItem(menu, LIST, Strings.get(R.string.my_list), null);
-        View line = new View(this);
-        line.setBackgroundColor(0x1FFFFFFF);
-        LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, Math.round(2 * k)));
-        ll.setMargins(Math.round(26 * k), Math.round(14 * k), Math.round(26 * k), Math.round(14 * k));
-        menu.addView(line, ll);
+        menuItem(menu, WATCH_NEXT, label(WATCH_NEXT), null);
+        menuDivider(menu);
         menuMovable = new LinearLayout(this);
         menuMovable.setOrientation(LinearLayout.VERTICAL);
         menu.addView(menuMovable);
@@ -438,14 +460,29 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
         return box;
     }
 
+    private void menuDivider(LinearLayout into) {
+        View line = new View(this);
+        line.setBackgroundColor(0x1FFFFFFF);
+        LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, Math.round(2 * k)));
+        ll.setMargins(Math.round(26 * k), Math.round(14 * k), Math.round(26 * k), Math.round(14 * k));
+        into.addView(line, ll);
+    }
+
     /** The movable part, in the person's order, without what they hid. */
     private void fillMenu() {
         for (int i = 0; i < menuMovable.getChildCount(); i++) menuItems.values().remove(menuMovable.getChildAt(i).getTag());
         menuMovable.removeAllViews();
-        for (String id : order()) {
-            if (hidden().contains(id)) continue;
+        menuShowsAll = Prefs.showAllProviders();
+        menuGrouped = Prefs.groupExploreServices();
+        Set<String> hidden = hidden();
+        int previousGroup = -1;
+        for (String id : menuOrder()) {
+            if (hidden.contains(id)) continue;
+            int group = menuGroup(id);
+            if (previousGroup >= 0 && group != previousGroup) menuDivider(menuMovable);
             Service s = id.startsWith(SERVICE) ? service(id) : null;
             menuItem(menuMovable, id, label(id), s != null ? s.logo : null);
+            previousGroup = group;
         }
         restyleMenu();
     }
@@ -455,11 +492,18 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
         item.setOrientation(LinearLayout.HORIZONTAL);
         item.setGravity(Gravity.CENTER_VERTICAL);
         item.setPadding(Math.round(26 * k), Math.round(16 * k), Math.round(26 * k), Math.round(16 * k));
-        if (logo != null) {
+        if (logo != null || KINOWATCH.equals(id)) {
             ImageView img = new ImageView(this);
             img.setClipToOutline(true);
             img.setBackground(TvUi.round(TvUi.CARD, 10 * k));
-            Images.load(img, logo.isEmpty() ? null : Tmdb.LOGO + logo);
+            if (KINOWATCH.equals(id)) {
+                try {
+                    img.setImageDrawable(getPackageManager().getApplicationIcon(KinoPub.PLAYER_PACKAGE));
+                } catch (PackageManager.NameNotFoundException ignored) {
+                }
+            } else {
+                Images.load(img, logo.isEmpty() ? null : Tmdb.LOGO + logo);
+            }
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Math.round(46 * k), Math.round(46 * k));
             lp.rightMargin = Math.round(20 * k);
             item.addView(img, lp);
@@ -573,7 +617,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
             }
             return super.dispatchKeyEvent(e);
         }
-        if (code == KeyEvent.KEYCODE_DPAD_UP && Tmdb.hasKey() && !SETTINGS.equals(current)) {
+        if (code == KeyEvent.KEYCODE_DPAD_UP && (Tmdb.hasKey() || KINOWATCH.equals(current) || WATCH_NEXT.equals(current)) && !SETTINGS.equals(current)) {
             View f = getCurrentFocus();
             View above = f == null || !inside(f, page) ? null : f.focusSearch(View.FOCUS_UP);
             if (f != null && inside(f, page) && (above == null || !inside(above, page))) {   // already at the top
@@ -657,16 +701,39 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
         }
     }
 
-    /** Every movable item, in the person's order; ones they never placed (a new service, a new save) go last. */
+    /** Every movable item, in the person's order within each group. */
     private List<String> order() {
         List<String> all = new ArrayList<>();
         for (String id : MOVABLE) all.add(id);
+        if (Providers.installed(this, KinoPub.PLAYER_PACKAGE)) all.add(KINOWATCH);
         for (java.util.Iterator<String> it = saved().keys(); it.hasNext(); ) all.add(it.next());
         if (services != null) for (Service s : services) all.add(SERVICE + s.key);
         List<String> out = new ArrayList<>();
         for (String id : readList("order")) if (all.contains(id) && !out.contains(id)) out.add(id);
         for (String id : all) if (!out.contains(id)) out.add(id);
+        out.sort(java.util.Comparator.comparingInt(this::menuGroup));
         return out;
+    }
+
+    private int menuGroup(String id) {
+        if (!Prefs.groupExploreServices()) return 0;
+        if (KINOWATCH.equals(id)) return 1;
+        if (!id.startsWith(SERVICE)) return 0;
+        Service s = service(id);
+        return s != null && s.installed ? 1 : 2;
+    }
+
+    private List<String> menuOrder() {
+        List<String> visible = new ArrayList<>();
+        int withoutApp = 0;
+        int limit = Prefs.showAllProviders() ? 12 : 0;
+        for (String id : order()) {
+            // shortcut: keep the regional tail short until the menu renders rows on demand.
+            Service service = id.startsWith(SERVICE) ? service(id) : null;
+            if (service != null && !service.installed && withoutApp++ >= limit) continue;
+            visible.add(id);
+        }
+        return visible;
     }
 
     private Set<String> hidden() {
@@ -682,7 +749,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     private void move(String id, int by) {
         List<String> o = order();
         int i = o.indexOf(id), j = i + by;
-        if (i < 0 || j < 0 || j >= o.size()) return;
+        if (i < 0 || j < 0 || j >= o.size() || menuGroup(id) != menuGroup(o.get(j))) return;
         o.set(i, o.get(j));
         o.set(j, id);
         writeList("order", o);
@@ -715,6 +782,8 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
             case HOME: return Strings.get(R.string.home);
             case LIST: return Strings.get(R.string.my_list);
             case SETTINGS: return Strings.get(R.string.settings);
+            case KINOWATCH: return "KinoWatch";
+            case WATCH_NEXT: return Strings.get(R.string.continue_watching);
             default:
                 if (id.startsWith(SAVED)) {
                     JSONObject s = saved().optJSONObject(id);
@@ -760,7 +829,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
         long now = android.os.SystemClock.uptimeMillis();
         if (pullAt != 0 && now - pullAt < PULL_MS) {
             pullAt = 0;
-            Tmdb.refreshLists();
+            if (!KINOWATCH.equals(current) && !WATCH_NEXT.equals(current)) Tmdb.refreshLists();
             flashPullHint(Strings.get(R.string.refreshing), 1400);
             showPage(current);
             return;
@@ -798,6 +867,11 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     // MARK: - Pages
 
     private void showPage(String id) {
+        if (watchArt != null) {
+            watchArt.close();
+            watchArt = null;
+            watchButtons.clear();
+        }
         current = id;
         pageAt = android.os.SystemClock.uptimeMillis() + 1;
         int gen = ++generation;
@@ -815,6 +889,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
         main.removeCallbacks(heroTick);
         main.removeCallbacks(searchSoon);
         main.removeCallbacks(tabSoon);
+        searchField = null;
         page.removeAllViews();
         scroll.top();
         restyleMenu();
@@ -838,6 +913,8 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
             case CATS: buildFilterPage(false, null); return;
             case LIST: buildList(); return;
             case SETTINGS: buildSettings(); return;
+            case KINOWATCH: buildKinoWatch(gen); return;
+            case WATCH_NEXT: buildWatchNext(gen); return;
             case MOVIES: case SHOWS: case KIDS: case ANIME: buildCatalog(id); return;
             default:
                 if (id.startsWith(SAVED)) {
@@ -869,6 +946,8 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
             case SEARCH: return Strings.get(R.string.search_filters_hint);
             case CATS: return Strings.get(R.string.save_category_filter_hint);
             case SETTINGS: return Strings.get(R.string.account_services_and_the_menus_order);
+            case KINOWATCH: return "KinoPub";
+            case WATCH_NEXT: return Strings.get(R.string.watch_next_source);
             case MOVIES: case SHOWS: case KIDS: case ANIME: return Strings.get(R.string.on_your_services_data_from_tmdb);
             default: return id.startsWith(SAVED) ? Strings.get(R.string.saved_filter) : Strings.get(R.string.data_from_tmdb);
         }
@@ -916,6 +995,134 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
                 });
             });
         }
+    }
+
+    private void buildWatchNext(int gen) {
+        if (WatchNext.allowed(this)) {
+            refreshWatchNext(gen);
+            return;
+        }
+        status.setVisibility(View.GONE);
+        rows.addView(TvUi.button(this, k, Strings.get(R.string.watch_next_allow),
+                v -> requestPermissions(new String[] {WatchNext.PERMISSION}, WATCH_NEXT_PERMISSION)),
+                new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        focusPage();
+    }
+
+    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode == WATCH_NEXT_PERMISSION && WATCH_NEXT.equals(current)) showPage(WATCH_NEXT);
+    }
+
+    private int watchNextRequest;
+    private final java.util.Map<TextView, WatchNext.Item> watchButtons = new java.util.LinkedHashMap<>();
+    private WatchArt watchArt;
+
+    private void updateWatchArt() {
+        for (java.util.Map.Entry<TextView, WatchNext.Item> row : watchButtons.entrySet()) {
+            Bitmap picture = watchArt.get(row.getValue());
+            if (picture == null) continue;
+            android.graphics.drawable.BitmapDrawable art = new android.graphics.drawable.BitmapDrawable(getResources(), picture);
+            art.setBounds(0, 0, picture.getWidth(), picture.getHeight());
+            row.getKey().setCompoundDrawablesRelative(art, null, null, null);
+        }
+    }
+
+    private void refreshWatchNext(int gen) {
+        int request = ++watchNextRequest;
+        io.execute(() -> {
+            try {
+                List<WatchNext.Item> items = WatchNext.load(this);
+                main.post(() -> {
+                    if (gen != generation || request != watchNextRequest || isDestroyed() || isFinishing()) return;
+                    boolean restoreFocus = !menuOpen && (getCurrentFocus() == null || rows.hasFocus());
+                    rows.removeViews(1, rows.getChildCount() - 1);
+                    status.setText(Strings.get(R.string.watch_next_empty));
+                    status.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+                    watchButtons.clear();
+                    if (watchArt != null) watchArt.close();
+                    watchArt = new WatchArt(this, this::updateWatchArt, false);
+                    watchArt.setSize(Math.round(100 * k), Math.round(100 * k));
+                    for (WatchNext.Item item : items) {
+                        String caption = item.title + " · " + item.app;
+                        if (item.progress() >= 0) caption += " · " + Math.round(item.progress() * 100) + "%";
+                        TextView button = TvUi.button(this, k, caption, v -> openWatchNext(item));
+                        button.setSingleLine(true);
+                        button.setEllipsize(TextUtils.TruncateAt.END);
+                        try {
+                            android.graphics.drawable.Drawable icon = getPackageManager().getApplicationIcon(item.pkg);
+                            int size = Math.round(100 * k);
+                            icon.setBounds(0, 0, size, size);
+                            button.setCompoundDrawablesRelative(icon, null, null, null);
+                        } catch (PackageManager.NameNotFoundException ignored) {}
+                        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                                Math.round(980 * k), ViewGroup.LayoutParams.WRAP_CONTENT);
+                        lp.topMargin = Math.round(16 * k);
+                        rows.addView(button, lp);
+                        button.setCompoundDrawablePadding(Math.round(20 * k));
+                        watchButtons.put(button, item);
+                    }
+                    updateWatchArt();
+                    if (restoreFocus) focusPage();
+                });
+            } catch (RuntimeException e) {
+                main.post(() -> {
+                    if (gen != generation || request != watchNextRequest || isDestroyed() || isFinishing()) return;
+                    status.setText(Strings.get(R.string.watch_next_unavailable));
+                    status.setVisibility(View.VISIBLE);
+                });
+            }
+        });
+    }
+
+    private void openWatchNext(WatchNext.Item item) {
+        if (!WatchNext.open(this, item)) {
+            Toast.makeText(this, Strings.get(R.string.couldnt_open_prefix) + item.title, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void buildKinoWatch(int gen) {
+        status.setVisibility(View.GONE);
+        kinoConnected = KinoPub.connected(this);
+        if (!kinoConnected) {
+            rows.addView(TvUi.button(this, k, Strings.get(R.string.connect_kinopub),
+                    v -> startActivity(new Intent(this, KinoLoginActivity.class))));
+            focusPage();
+            return;
+        }
+        loadKinoShelf(gen, R.string.kinopub_watching, () -> KinoPub.watching(this));
+        loadKinoShelf(gen, R.string.kinopub_fresh, () -> KinoPub.fresh(this));
+        loadKinoShelf(gen, R.string.kinopub_popular_movies, () -> KinoPub.popular(this, true));
+        loadKinoShelf(gen, R.string.kinopub_popular_shows, () -> KinoPub.popular(this, false));
+    }
+
+    private void loadKinoShelf(int gen, int label, Callable<List<Tmdb.Title>> load) {
+        String title = Strings.get(label);
+        TextView message = note(title + " · " + Strings.get(R.string.loading));
+        rows.addView(message);
+        io.execute(() -> {
+            try {
+                List<Tmdb.Title> titles = load.call();
+                main.post(() -> {
+                    if (gen != generation || isFinishing() || isDestroyed()) return;
+                    if (titles.isEmpty()) {
+                        message.setText(title + " · " + Strings.get(R.string.nothing_found));
+                        return;
+                    }
+                    int slot = rows.indexOfChild(message);
+                    rows.removeViewAt(slot);
+                    rows.addView(TvUi.row(this, k, title, titles, this::open, null, Math.round(INSET * k)), slot);
+                    View focus = getCurrentFocus();
+                    if (focus == null || !inside(focus, page)) focusPage();
+                });
+            } catch (Exception e) {
+                main.post(() -> {
+                    if (gen != generation || isFinishing() || isDestroyed()) return;
+                    if (!KinoPub.connected(this)) showPage(KINOWATCH);
+                    else message.setText(title + " · " + Strings.get(R.string.couldnt_fetch_titles_now_check_the_tvs_internet));
+                });
+            }
+        });
     }
 
     private void refreshPersonal() {
@@ -991,6 +1198,14 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     }
 
     private void open(Tmdb.Title t) {
+        if (KinoPub.KIND.equals(t.kind)) {
+            try {
+                KinoPub.open(this, t.id);
+            } catch (RuntimeException e) {
+                Toast.makeText(this, Strings.get(R.string.kinowatch_couldnt_open_this_title), Toast.LENGTH_LONG).show();
+            }
+            return;
+        }
         if (t.kind.equals("movie") || t.kind.equals("tv")) io.execute(() -> Tmdb.noteOpened(this, t));   // Explore's Recents
         if (current.equals(SEARCH) && filter != null && !filter.query.isEmpty()) remember(filter.query);
         DetailActivity.open(this, t.kind, t.id);
@@ -1783,6 +1998,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
 
     // MARK: - Search and categories: the same filter
 
+    private EditText searchField;
     private Filter filter;
     private String savedId;
     private LinearLayout chips;
@@ -1804,7 +2020,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
         bar.setPadding(0, Math.round(16 * k), 0, 0);
         View first;
         if (search) {
-            EditText field = new EditText(this);
+            EditText field = searchField = new EditText(this);
             field.setSingleLine(true);
             field.setTextSize(TypedValue.COMPLEX_UNIT_PX, 34 * k);
             field.setTextColor(TvUi.INK);
@@ -1826,12 +2042,15 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
             });
             field.setOnEditorActionListener((v, action, event) -> {
                 ((InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(v.getWindowToken(), 0);
-                main.removeCallbacks(searchSoon);
-                remember(filter.query);
-                runFilter();
+                submitSearch();
                 return true;
             });
             bar.addView(field, new LinearLayout.LayoutParams(Math.round(1000 * k), ViewGroup.LayoutParams.WRAP_CONTENT));
+            View mic = TvUi.iconButton(this, k, "mic", null, v -> startVoiceSearch());
+            mic.setContentDescription(Strings.get(R.string.voice_search));
+            LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            ml.leftMargin = Math.round(20 * k);
+            bar.addView(mic, ml);
             first = field;
         } else {
             first = null;
@@ -1873,6 +2092,40 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
         showChips();
         runFilter();
         (first != null ? first : filterButton).requestFocus();
+    }
+
+    private void startVoiceSearch() {
+        Intent speech = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+                .putExtra(RecognizerIntent.EXTRA_LANGUAGE, Ui.locale().toLanguageTag());
+        Intent google = new Intent(speech).setPackage("com.google.android.tts");
+        if (google.resolveActivity(getPackageManager()) != null) speech = google;
+        try {
+            startActivityForResult(speech, VOICE_SEARCH);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, Strings.get(R.string.voice_search_unavailable),
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override protected void onActivityResult(int request, int result, Intent data) {
+        super.onActivityResult(request, result, data);
+        if (request != VOICE_SEARCH || result != RESULT_OK || data == null
+                || !SEARCH.equals(current) || searchField == null) return;
+        List<String> words = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+        if (words == null || words.isEmpty() || words.get(0) == null) return;
+        String query = words.get(0).trim();
+        if (query.isEmpty()) return;
+        searchField.setText(query);
+        searchField.setSelection(query.length());
+        submitSearch();
+    }
+
+    private void submitSearch() {
+        main.removeCallbacks(searchSoon);
+        remember(filter.query);
+        runFilter();
     }
 
     /** The filter's parts as chips under the bar; OK on one takes it off. */
@@ -2199,7 +2452,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     private void fillOrganizer(LinearLayout list, String focusId) {
         list.removeAllViews();
         Set<String> hid = hidden();
-        List<String> ids = order();
+        List<String> ids = menuOrder();
         for (int i = 0; i < ids.size(); i++) {
             String id = ids.get(i);
             int at = i;
@@ -2222,11 +2475,11 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
             row.setOnClickListener(v -> {
                 List<String> labels = new ArrayList<>();
                 List<Runnable> actions = new ArrayList<>();
-                if (at > 0) {
+                if (at > 0 && menuGroup(id) == menuGroup(ids.get(at - 1))) {
                     labels.add(Strings.get(R.string.move_up));
                     actions.add(() -> move(id, -1));
                 }
-                if (at < ids.size() - 1) {
+                if (at < ids.size() - 1 && menuGroup(id) == menuGroup(ids.get(at + 1))) {
                     labels.add(Strings.get(R.string.move_down));
                     actions.add(() -> move(id, 1));
                 }
@@ -2548,6 +2801,7 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
                         .more(() -> showPage(MOVIES)));
                 int n = 0;
                 for (Service s : services()) {
+                    if (!s.installed && !Prefs.showAllProviders()) continue;
                     if (n++ >= 6) break;
                     out.add(new Section(Strings.get(R.string.trending_on_prefix) + s.name, () -> mix(
                             discover("tv", "&with_watch_providers=" + s.ids + "&sort_by=popularity.desc"),
@@ -2588,37 +2842,50 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
 
     // MARK: - Services and TMDB helpers
 
-    /** The services with an app (or all, with "show all"), one per app, most watched first. Asked once. */
+    private void loadMenuServices() {
+        providersStamp = Prefs.providersStamp();
+        io.execute(() -> {
+            services();
+            main.post(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                fillMenu();
+                if (SETTINGS.equals(current)) showPage(SETTINGS);
+            });
+        });
+    }
+
+    /** Regional services in TMDB order, including those without an app so the sidebar can list them. */
     private synchronized List<Service> services() {
         if (services != null) return services;
         List<Service> out = new ArrayList<>();
         try {
             Map<String, Service> byApp = new LinkedHashMap<>();
             Map<String, StringBuilder> ids = new HashMap<>();
-            for (Providers.Provider p : Providers.usable(this)) {
+            for (Providers.Provider p : Providers.region()) {
+                if (Providers.off(p.id)) continue;
                 String app = Providers.app(this, p.id, p.name);
                 String key = app != null ? app : "p" + p.id;
                 if (!byApp.containsKey(key)) {
-                    byApp.put(key, new Service(key, p.name, "", p.logo));
+                    byApp.put(key, new Service(key, p.name, "", p.logo, app != null));
                     ids.put(key, new StringBuilder());
                 }
                 StringBuilder b = ids.get(key);
                 b.append(b.length() == 0 ? "" : "|").append(p.id);
             }
-            for (Service s : byApp.values()) out.add(new Service(s.key, s.name, ids.get(s.key).toString(), s.logo));
+            for (Service s : byApp.values()) out.add(new Service(s.key, s.name, ids.get(s.key).toString(), s.logo, s.installed));
         } catch (Exception e) {
             AppLog.w("explore services: " + e.getMessage());
             return out;   // not kept: the next page asks again
         }
-        if (out.size() > 12) out = new ArrayList<>(out.subList(0, 12));
         services = out;
         return out;
     }
 
     private Service service(String pageId) {
-        if (services == null) return null;
+        List<Service> available = services;
+        if (available == null) return null;
         String key = pageId.startsWith(SERVICE) ? pageId.substring(SERVICE.length()) : pageId;
-        for (Service s : services) if (s.key.equals(key)) return s;
+        for (Service s : available) if (s.key.equals(key)) return s;
         return null;
     }
 
@@ -2626,7 +2893,12 @@ public class ExploreActivity extends Activity implements TitleMenu.Host {
     private String servicesParam() {
         if (Prefs.showAllProviders()) return "&watch_region=" + Tmdb.region();
         StringBuilder ids = new StringBuilder();
-        for (Service s : services()) ids.append(ids.length() == 0 ? "" : "|").append(s.ids);
+        int count = 0;
+        for (Service s : services()) {
+            if (!s.installed) continue;
+            if (count++ == 12) break;
+            ids.append(ids.length() == 0 ? "" : "|").append(s.ids);
+        }
         return ids.length() == 0 ? "" : "&watch_region=" + Tmdb.region() + "&with_watch_providers=" + ids
                 + "&with_watch_monetization_types=flatrate";
     }

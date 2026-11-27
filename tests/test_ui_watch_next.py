@@ -125,9 +125,10 @@ class HomeScreen(unittest.TestCase):
         self.assertNotIn("ContentObserver", self.view)
 
     def test_the_picks_step_aside(self):
-        self.assertIn("return !watchMode && Recs.hasKey(getContext());", method(self.view, "    private boolean picksOn() {"))
-        self.assertIn("tabPicks[t] = watchMode ? new ArrayList<Recs.Pick>() : recs.all(TAB_KIND[t]);",
-                      method(self.view, "    private void updateCards() {"))
+        self.assertIn("return !watchMode && (kinoSelected() || Recs.hasKey(getContext()));", method(self.view, "    private boolean picksOn() {"))
+        cards = method(self.view, "    private void updateCards() {")
+        self.assertIn("boolean kino = !watchMode && kinoSelected();", cards)
+        self.assertIn("watchMode ? java.util.Collections.emptyList() : recs.all(TAB_KIND[t])", cards)
 
     def test_ok_resumes_through_the_link(self):
         self.assertIn("WatchNext.open(activity, w)", method(self.view, "    private void activate() {"))

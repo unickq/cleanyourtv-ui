@@ -85,7 +85,7 @@ class NowPlayingSource(unittest.TestCase):
         home = read("HomeView.java")
         self.assertIn("playing.start();", method(home, "void resume()"))
         self.assertIn("playing.stop();", method(home, "void pause()"))
-        self.assertEqual(home.count("if (HomeData.coinCount() > 0 || playingTab != null) drawQuotes(c);"), 3)   # the clock top, the tabs, Continue Watching
+        self.assertEqual(home.count("if (HomeData.coinCount() > 0 || playingTab != null) drawQuotes(c);"), 4)   # clock, tabs, empty KinoPub and Continue Watching
         self.assertIn("R.string.now_playing_announce", home)
         dream = read("DreamView.java")
         self.assertIn("playing.start();", method(dream, "public void start()"))

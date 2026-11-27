@@ -34,7 +34,7 @@ class WeatherForecastTest(unittest.TestCase):
         self.assertIn("forecast_days=6", q)
         self.assertIn("forecast_hours=48", q)
         hosts = set(re.findall(r"https://([a-z.-]+)", data))
-        self.assertEqual(hosts, {"api.open-meteo.com", "geocoding-api.open-meteo.com", "api.binance.com"})
+        self.assertEqual(hosts, {"api.open-meteo.com", "geocoding-api.open-meteo.com", "api.binance.com", "api.frankfurter.dev"})
 
     def test_cache_remembers_its_query(self):
         data = read("HomeData.java")
@@ -43,8 +43,9 @@ class WeatherForecastTest(unittest.TestCase):
 
     def test_rain_codes_and_window(self):
         data = read("HomeData.java")
-        self.assertIn("static int rainInHours(Weather w, long now)", data)
-        self.assertIn("(code >= 51 && code <= 67) || (code >= 80 && code <= 82) || code >= 95", data)
+        self.assertIn("static int rainInHours(Weather weather, long now)", data)
+        self.assertIn("ahead > 0 && isRain(weather.hourCode.get(i))", data)
+        self.assertIn("(code >= 51 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99)", data)
         # The window is the hours the card shows: parseWeather keeps 6.
         self.assertIn("w.hours.size() < 6", data)
         self.assertIn("w.days.size() < 5", data)

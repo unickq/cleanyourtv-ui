@@ -8,8 +8,6 @@
     <string name="all">"הכול"</string>
     <string name="all_ages">"לכל הגילים"</string>
     <string name="all_apps">"כל האפליקציות"</string>
-    <string name="system_apps_in_all_apps">"אפליקציות מערכת בכל האפליקציות"</string>
-    <string name="apps_settings">"הגדרות אפליקציות"</string>
     <string name="animation">"אנימציה"</string>
     <string name="anime">"אנימה"</string>
     <string name="any_year">"כל שנה"</string>
@@ -25,6 +23,7 @@
     <string name="born_prefix">"נולד/ה: "</string>
     <string name="buy">"קנייה"</string>
     <string name="cancel">"ביטול"</string>
+    <string name="cancel_2">"ביטול"</string>
     <string name="canceled">"בוטלה"</string>
     <string name="cartoons">"סרטים מצוירים"</string>
     <string name="cast">"שחקנים"</string>
@@ -34,9 +33,6 @@
     <string name="clear">"ניקוי"</string>
     <string name="clock_and_aurora">"שעון וזוהר צפוני"</string>
     <string name="clock_format">"תצוגת שעון"</string>
-    <string name="at_power_on">"בהדלקה"</string>
-    <string name="power_on_tv">"לפי הטלוויזיה"</string>
-    <string name="power_on_hint">"רק אחרי הפעלה מלאה, לא ביציאה ממצב המתנה."</string>
     <string name="close">"סגירה"</string>
     <string name="connect_tmdb_account">"חיבור חשבון TMDB"</string>
     <string name="connect_your_tmdb_account">"חיבור חשבון ה־TMDB שלך"</string>
@@ -89,11 +85,9 @@
     <string name="go_to_settings">"להגדרות"</string>
     <string name="google_photos">"תמונות Google"</string>
     <string name="hdmi_inputs">"כניסות HDMI"</string>
-    <string name="app_store">"חנות אפליקציות"</string>
-    <string name="add_app_store_button">"הוספת כפתור חנות האפליקציות"</string>
-    <string name="remove_app_store_button">"הסרת כפתור חנות האפליקציות"</string>
     <string name="hidden">"מוסתר"</string>
     <string name="hide">"להסתיר את „"</string>
+    <string name="hide_purchases">"הסתרת אפשרויות קנייה"</string>
     <string name="hide_2">"הסתרה"</string>
     <string name="hide_from_the_menu">"הסתרה מהתפריט"</string>
     <string name="high_prefix">". מקסימום "</string>
@@ -156,20 +150,11 @@
     <string name="no_tmdb_key">"אין מפתח TMDB"</string>
     <string name="tmdb_key_missing_build_hint">"אין מפתח TMDB: יש להוסיף אותו ל־launcher-ui/config.properties ולהתקין שוב."</string>
     <string name="no_weather_data_right_now">"אין נתוני מזג אוויר כרגע."</string>
+    <string name="not_connected">"לא מחובר"</string>
     <string name="not_connected_2">"לא מחובר"</string>
     <string name="not_installed">"לא מותקן"</string>
-    <string name="now_playing_announce">"מתנגן עכשיו: %1$s"</string>
-    <string name="now_playing_hint">"שם, אמן ואפליקציה של מה שמתנגן. שום דבר לא יוצא מהטלוויזיה."</string>
-    <string name="now_playing_hint_not_allowed">"אפשרו זאת ממחשב עם NOW_PLAYING=1."</string>
-    <string name="now_playing_not_allowed">"לא מאושר"</string>
-    <string name="now_playing_widget">"וידג\'ט מתנגן עכשיו"</string>
     <string name="not_on_any_streaming_service_in_the_region_right_now">"כרגע לא זמין באף שירות סטרימינג באזור."</string>
     <string name="not_on_the_shelf">"לא במדף"</string>
-    <string name="inputs_edit_hint">"הצגה או הסתרה של כניסה ב־OK. שינוי הסדר ב־← →."</string>
-    <string name="in_the_inputs_place_prefix">"בכניסות, מקום "</string>
-    <string name="not_in_the_inputs">"לא בכניסות"</string>
-    <string name="input_hidden">"מוסתרת"</string>
-    <string name="live_tv_button">"כפתור שידור חי"</string>
     <string name="nothing_found">"לא נמצא כלום."</string>
     <string name="nothing_here_yet_open_a_title_to_add_it">"עדיין אין כאן כלום. פותחים כותר כדי להוסיף אותו."</string>
     <string name="nothing_matches_this_filter">"אין תוצאות למסנן הזה."</string>
@@ -185,8 +170,6 @@
     <string name="on_the_shelf_place_prefix">"במדף, מקום "</string>
     <string name="on_your_services_data_from_tmdb">"בשירותים שלך · מידע מ־TMDB"</string>
     <string name="open_anyway">"לפתוח בכל זאת"</string>
-    <string name="opens_prefix">"פותח את "</string>
-    <string name="opens_the_title_in_prefix">"פותח את הכותר ב־"</string>
     <string name="original">"מקורי"</string>
     <string name="save_category_filter_hint">"בוחרים קטגוריות ושנה במסנן ושומרים אותו בתפריט"</string>
     <string name="pick_something_in_the_filter_first">"קודם בוחרים משהו במסנן."</string>
@@ -225,8 +208,6 @@
     <string name="saved_to_the_menu">"נשמר בתפריט"</string>
     <string name="screensaver">"שומר מסך"</string>
     <string name="screensaver_preview">"שומר מסך, תצוגה מקדימה"</string>
-    <string name="screensaver_ok_hint">"לחצו OK לצפייה ב־%1$s · כל כפתור אחר סוגר"</string>
-    <string name="screensaver_ok_opens_title">"OK בשומר המסך פותח את הכותרת"</string>
     <string name="search">"חיפוש"</string>
     <string name="side_menu_edit_hint">"חיפוש, בית והרשימה שלי תמיד למעלה. OK על פריט: הזזה, הסתרה או הסרה."</string>
     <string name="search_movie_via_iptv">"חיפוש סרט ב-IPTV"</string>
@@ -246,10 +227,6 @@
     <string name="settings_2">"הגדרות"</string>
     <string name="shelf">"מדף האפליקציות"</string>
     <string name="shelf_edit_hint">"הוספה או הסרה ב־OK (עד %1$d). שינוי הסדר ב־← →."</string>
-    <string name="shelf_edit_hint_recent">"הוספה או הסרה ב־OK (עד %1$d). האפליקציה שנפתחה אחרונה מופיעה ראשונה."</string>
-    <string name="shelf_order">"סדר המדף"</string>
-    <string name="shelf_order_manual">"הסדר שלי"</string>
-    <string name="shelf_order_recent">"האחרונה שנפתחה ראשונה"</string>
     <string name="shortcuts">"קיצורי דרך"</string>
     <string name="show">"סדרה"</string>
     <string name="show_every_service">"הצגת כל השירותים"</string>
@@ -270,12 +247,6 @@
     <string name="the_link_expired_go_back_and_open_it_again">"תוקף הקישור פג. חוזרים אחורה ופותחים אותו שוב."</string>
     <string name="the_tvs_own">"של הטלוויזיה"</string>
     <string name="theme">"ערכת עיצוב"</string>
-    <string name="top_of_screen">"החלק העליון של המסך"</string>
-    <string name="continue_watching">"המשך צפייה"</string>
-    <string name="watch_nothing">"אין באפליקציות שום דבר שנצפה חלקית."</string>
-    <string name="watch_needs_permission">"יש לאשר ממחשב: %1$s"</string>
-    <string name="watch_time_left">"נותרו %1$s"</string>
-    <string name="watch_episode">"ע%1$s פ%2$s"</string>
     <string name="this_afternoon">"אחר הצהריים"</string>
     <string name="this_morning">"הבוקר"</string>
     <string name="tmdb_attribution">"המוצר משתמש ב־API של TMDB, אך אינו מאושר או מוסמך על ידי TMDB."</string>
@@ -305,8 +276,6 @@
     <string name="trending_this_week">"פופולרי השבוע"</string>
     <string name="trending_today">"פופולרי היום"</string>
     <string name="tv_settings">"הגדרות הטלוויזיה"</string>
-    <string name="keystone">"תיקון טרפז"</string>
-    <string name="screen_mirroring">"שיקוף מסך"</string>
     <string name="tv_settings_2">"הגדרות הטלוויזיה"</string>
     <string name="type">"סוג"</string>
     <string name="type_the_citys_name">"מקלידים את שם העיר"</string>
@@ -324,13 +293,13 @@
     <string name="youtube_button">"כפתור YouTube"</string>
 
     <string name="count_from_tmdb">%1$s · נתוני TMDB</string>
+    <string name="kinopub_fresh">"חדש ב-KinoPub"</string>
+    <string name="kinopub_watching">"בצפייה"</string>
+    <string name="kinopub_popular_movies">"סרטים פופולריים"</string>
+    <string name="kinopub_popular_shows">"סדרות פופולריות"</string>
     <plurals name="titles">
         <item quantity="one">%1$d כותר</item>
         <item quantity="other">%1$d כותרים</item>
-    </plurals>
-    <plurals name="seasons">
-        <item quantity="one">%1$d עונה</item>
-        <item quantity="other">%1$d עונות</item>
     </plurals>
 
     <string name="weather_clear_day">"שמשי"</string>
@@ -349,22 +318,69 @@
     <string name="weather_range_wide">"מקס\' %1$s   מינ\' %2$s"</string>
     <string name="weather_minutes_ago">"לפני %1$d דק\'"</string>
     <string name="weather_hours_ago">"לפני %1$d שע\'"</string>
+    <string name="duration_minutes">"%1$d דק\'"</string>
+    <string name="duration_hours_minutes">"%1$d שע\' %2$d דק\'"</string>
+    <string name="continue_watching">המשך צפייה</string>
+    <string name="watch_next_source">מאפליקציות Android TV שלך</string>
+    <string name="watch_next_allow">מתן גישה לרשימת הצפייה</string>
+    <string name="watch_next_empty">אף אפליקציה עדיין לא שיתפה תוכן להמשך צפייה.</string>
+    <string name="watch_next_unavailable">רשימת הצפייה של Android TV אינה זמינה.</string>
+    <string name="my_quotes">השערים שלי</string>
+    <string name="add_currency_pair">הוספת צמד מטבעות</string>
+    <string name="invalid_currency_pair">הזינו צמד מטבעות כמו EUR/RON.</string>
+    <string name="duplicate_currency_pair">הצמד הזה כבר ברשימה.</string>
+    <string name="system_apps_in_all_apps">"אפליקציות מערכת בכל האפליקציות"</string>
+    <string name="at_power_on">"בהדלקה"</string>
+    <string name="power_on_tv">"לפי הטלוויזיה"</string>
+    <string name="app_store">"חנות אפליקציות"</string>
+    <string name="add_app_store_button">"הוספת כפתור חנות האפליקציות"</string>
+    <string name="remove_app_store_button">"הסרת כפתור חנות האפליקציות"</string>
+    <string name="now_playing_announce">"מתנגן עכשיו: %1$s"</string>
+    <string name="now_playing_hint">"שם, אמן ואפליקציה של מה שמתנגן. שום דבר לא יוצא מהטלוויזיה."</string>
+    <string name="now_playing_hint_not_allowed">"אפשרו זאת ממחשב עם NOW_PLAYING=1."</string>
+    <string name="now_playing_not_allowed">"לא מאושר"</string>
+    <string name="now_playing_widget">"וידג\'ט מתנגן עכשיו"</string>
+    <string name="live_tv_button">"כפתור שידור חי"</string>
+    <string name="screensaver_ok_hint">"לחצו OK לצפייה ב־%1$s · כל כפתור אחר סוגר"</string>
+    <string name="screensaver_ok_opens_title">"OK בשומר המסך פותח את הכותרת"</string>
+    <string name="shelf_order">"סדר המדף"</string>
+    <string name="shelf_order_manual">"הסדר שלי"</string>
+    <string name="shelf_order_recent">"האחרונה שנפתחה ראשונה"</string>
+    <string name="top_of_screen">"החלק העליון של המסך"</string>
+    <string name="watch_nothing">"אין באפליקציות שום דבר שנצפה חלקית."</string>
+    <string name="watch_needs_permission">"יש לאשר ממחשב: %1$s"</string>
+    <string name="watch_time_left">"נותרו %1$s"</string>
+    <string name="watch_episode">"ע%1$s פ%2$s"</string>
+    <string name="keystone">"תיקון טרפז"</string>
+    <string name="screen_mirroring">"שיקוף מסך"</string>
     <string name="weather_rain_now">"יורד גשם עכשיו"</string>
     <string name="weather_rain_in_hours">"גשם בעוד %1$d שע\'"</string>
-    <string name="weather_day_range">"%1$s: מקסימום %2$s, מינימום %3$s"</string>
-    <string name="next_days_suffix_prefix">" הימים הקרובים: "</string>
     <string name="forecast">"תחזית"</string>
     <string name="forecast_next_hours">"השעות הקרובות"</string>
     <string name="forecast_next_5_days">"5 הימים הקרובים"</string>
-    <string name="duration_minutes">"%1$d דק\'"</string>
-    <string name="duration_hours_minutes">"%1$d שע\' %2$d דק\'"</string>
-    <string name="sleep_timer">"טיימר שינה"</string>
     <string name="sleep_minutes">"%1$d דק\'"</string>
     <string name="sleep_left">"נותרו %1$d דק\'"</string>
     <string name="sleep_unavailable">"דורש את שירות המקשים"</string>
-    <string name="sleep_unavailable_why">"טיימר השינה מכבה את הטלוויזיה דרך שירות מקשי השלט, שכבוי בטלוויזיה הזו. אפשר להפעיל אותו ממחשב: KEY_SERVICE=1 launcher-ui/build-and-install.sh"</string>
     <string name="sleep_warning">"הטלוויזיה תיכבה בעוד %1$d שנ\'"</string>
     <string name="sleep_more">"עוד 15 דקות"</string>
     <string name="sleep_keep_on">"להשאיר את הטלוויזיה דולקת"</string>
     <string name="sleep_now">"לכבות עכשיו"</string>
+    <string name="inputs_edit_hint">"הצגה או הסתרה של כניסה ב־OK. שינוי הסדר ב־← →."</string>
+    <string name="input_hidden">"מוסתרת"</string>
+    <string name="shelf_edit_hint_recent">"הוספה או הסרה ב־OK (עד %1$d). האפליקציה שנפתחה אחרונה מופיעה ראשונה."</string>
+    <string name="sleep_timer">"טיימר שינה"</string>
+    <string name="sleep_unavailable_why">"טיימר השינה מכבה את הטלוויזיה דרך שירות מקשי השלט, שכבוי בטלוויזיה הזו. אפשר להפעיל אותו ממחשב: KEY_SERVICE=1 launcher-ui/build-and-install.sh"</string>
+    <string name="apps_settings">"הגדרות אפליקציות"</string>
+    <string name="power_on_hint">"רק אחרי הפעלה מלאה, לא ביציאה ממצב המתנה."</string>
+    <string name="in_the_inputs_place_prefix">"בכניסות, מקום "</string>
+    <string name="not_in_the_inputs">"לא בכניסות"</string>
+    <string name="weather_day_range">"%1$s: מקסימום %2$s, מינימום %3$s"</string>
+    <string name="next_days_suffix_prefix">" הימים הקרובים: "</string>
+    <plurals name="seasons">
+        <item quantity="one">%1$d עונה</item>
+        <item quantity="other">%1$d עונות</item>
+    </plurals>
+    <string name="voice_search">"חיפוש קולי"</string>
+    <string name="voice_search_unavailable">"חיפוש קולי אינו זמין בטלוויזיה זו."</string>
+    <string name="mute_navigation_sounds">"השתקת צלילי ניווט"</string>
 </resources>

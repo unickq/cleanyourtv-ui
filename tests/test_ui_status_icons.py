@@ -1,8 +1,8 @@
-"""CleanYourTV UI: Wi-Fi/Ethernet and USB drive status icons by the round buttons, off by default (#69).
+"""CleanYourTV UI: Network, USB drive and Bluetooth audio icons by the round buttons.
 
 From Free My TV PR 371 (merge 877e9f8) and eb649bb: the network from a default-network callback on the main thread,
 a USB drive as a mounted removable volume queried off the main thread, registered only while the setting is on.
-No Bluetooth icon and no new permission (Android 12+ would need BLUETOOTH_CONNECT). This reads the source.
+Bluetooth audio is detected through AudioManager. This reads the source.
 
 Run from the repository root: python3 -m unittest discover -s tests -p test_ui_status_icons.py -v
 """
@@ -28,10 +28,10 @@ class StatusIconsTest(unittest.TestCase):
     def setUp(self):
         self.view = read("HomeView.java")
 
-    def test_off_by_default_and_from_config(self):
-        self.assertIn('static boolean statusIcons() { return sp().getBoolean("statusIcons", false); }', read("Prefs.java"))
+    def test_on_by_default_and_from_config(self):
+        self.assertIn('static boolean statusIcons() { return sp().getBoolean("statusIcons", true); }', read("Prefs.java"))
         self.assertIn('if (o.has("status_icons")) Prefs.setStatusIcons(o.getBoolean("status_icons"));', read("TvConfig.java"))
-        self.assertIs(json.loads((UI / "config.example.json").read_text(encoding="utf-8"))["status_icons"], False)
+        self.assertIs(json.loads((UI / "config.example.json").read_text(encoding="utf-8"))["status_icons"], True)
 
     def test_registered_only_while_on_and_while_showing(self):
         start = method(self.view, "    private void startStatus() {")
@@ -60,14 +60,15 @@ class StatusIconsTest(unittest.TestCase):
         self.assertIn("        applyTone();\n        drawStatusIcons(c);",
                       method(self.view, "    private void drawLightButtons(Canvas c) {"))
         draw = method(self.view, "    private void drawStatusIcons(Canvas c) {")
-        self.assertIn("if (!Prefs.statusIcons() || (network == 0 && !usbDrive)) return;", draw)
+        self.assertIn("if (!Prefs.statusIcons() || (network == 0 && !usbDrive && !bluetoothAudio)) return;", draw)
         self.assertIn("for (int i = TABS.length; i < TABS.length + lightButtons.size(); i++)", draw)
         self.assertIn("for (String name : STATUS_SYMBOLS)", method(self.view, "    private void layoutLight() {"))
         self.assertIn("static float pointSizeForHeight(Context c, String name, float height)", read("Symbols.java"))
-        for name in ("wifi", "ethernet", "usb"):
+        for name in ("wifi", "ethernet", "usb", "bluetooth"):
             self.assertTrue((UI / "app/assets/symbols" / (name + ".png")).is_file(), name)
 
-    def test_no_bluetooth_and_no_new_permission(self):
+    def test_bluetooth_audio_needs_no_new_permission(self):
+        self.assertIn("AudioDeviceInfo.TYPE_BLUETOOTH_A2DP", self.view)
         self.assertNotIn("BluetoothAdapter", self.view)
         self.assertNotIn("BluetoothProfile", self.view)
         manifest = (UI / "app/AndroidManifest.xml").read_text(encoding="utf-8")

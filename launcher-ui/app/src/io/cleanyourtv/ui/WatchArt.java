@@ -79,9 +79,13 @@ final class WatchArt {
     };
 
     WatchArt(Context c, Runnable onLoaded) {
+        this(c, onLoaded, true);
+    }
+
+    WatchArt(Context c, Runnable onLoaded, boolean home) {
         app = c.getApplicationContext();
         this.onLoaded = onLoaded;
-        live = this;
+        if (home) live = this;
     }
 
     /** The home screen left the screen (App.onTrimMemory): the pictures go, and are made again when it's back. */

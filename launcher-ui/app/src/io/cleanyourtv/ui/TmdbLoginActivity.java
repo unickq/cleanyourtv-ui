@@ -190,7 +190,7 @@ public class TmdbLoginActivity extends Activity {
         box.addView(status);
     }
 
-    private static Bitmap render(Qr q, int px) {
+    static Bitmap render(Qr q, int px) {
         int scale = Math.max(1, px / q.size);
         Bitmap b = Bitmap.createBitmap(q.size * scale, q.size * scale, Bitmap.Config.RGB_565);
         for (int y = 0; y < q.size; y++) {

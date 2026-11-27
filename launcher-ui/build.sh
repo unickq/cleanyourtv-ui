@@ -67,6 +67,7 @@ number() {
 if [ "$PROPS" = /dev/null ]; then LAT=""; LON=""; else LAT="$(number latitude 40.7128)"; LON="$(number longitude -74.0060)"; fi
 ASSIST=false; [ "$(prop disable_assistant false)" = "true" ] && ASSIST=true
 CRYPTO=false; [ "$(prop show_crypto false)" = "true" ] && CRYPTO=true
+GIT_COMMIT="$(git describe --always --abbrev=8 --dirty --match '' 2>/dev/null || true)"
 
 rm -rf out && mkdir -p out/gen/io/cleanyourtv/ui out/classes
 cat > out/gen/io/cleanyourtv/ui/Config.java <<EOF
@@ -76,12 +77,13 @@ package io.cleanyourtv.ui;
 final class Config {
     private Config() {}
 
+    static final String GIT_COMMIT = "$GIT_COMMIT";
     static final String TMDB_KEY = "$(prop tmdb_key '')";
     static final String TMDB_REGION = "$(prop tmdb_region '')";
     static final String LATITUDE = "$LAT";
     static final String LONGITUDE = "$LON";
     static final String CITY = "$(prop city '')";
-    static final String LANGUAGE = "$(prop language auto)";
+    static final String LANGUAGE = "$(prop language en)";
     static final String CURRENCY = "$(prop currency USD)";
     static final String TEMPERATURE = "$(prop temperature auto)";
     static final boolean DISABLE_ASSISTANT = $ASSIST;

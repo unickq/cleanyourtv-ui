@@ -55,8 +55,10 @@ class BgFollowTest(unittest.TestCase):
 
     def test_update_cards_uses_the_focused_card(self):
         method = body(source(), "    private void updateCards() {")
-        self.assertIn("recs.backdrop(cards.get(Math.min(cardIndex, cards.size() - 1)))", method)
-        self.assertNotIn("recs.backdrop(cards.get(0))", method)
+        self.assertIn("updateCardBackdrop();", method)
+        backdrop = body(source(), "    private void updateCardBackdrop() {")
+        self.assertIn("cards.get(Math.min(cardIndex, cards.size() - 1))", backdrop)
+        self.assertIn("recs.backdrop(pick.backdrop == null ? cards.get(0) : pick)", backdrop)
 
     def test_page_turn_sets_the_index_first(self):
         method = body(source(), "    private boolean moveLight(int dx, int dy) {")

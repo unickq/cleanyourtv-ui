@@ -92,6 +92,9 @@ final class TvConfig {
             }
             if (o.has("temperature")) Prefs.setTemperature(o.getString("temperature"));
             if (o.has("weather")) Prefs.setWeather(o.getBoolean("weather"));
+            if (o.has("app_recommendations")) Prefs.setAppRecommendations(o.getBoolean("app_recommendations"));
+            if (o.has("group_explore_services")) Prefs.setGroupExploreServices(o.getBoolean("group_explore_services"));
+            if (o.has("mute_navigation_sounds")) Prefs.setMuteNavigationSounds(o.getBoolean("mute_navigation_sounds"));
             if (o.has("status_icons")) Prefs.setStatusIcons(o.getBoolean("status_icons"));
             if (o.has("language")) Prefs.setLanguage(o.getString("language"));
             if (o.has("clock")) Prefs.setClockFormat(o.getString("clock"));

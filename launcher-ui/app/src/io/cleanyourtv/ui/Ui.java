@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
+import android.graphics.Bitmap;
+import android.graphics.BitmapShader;
+import android.graphics.Shader;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -165,7 +168,6 @@ final class Ui {
         return Math.max(0, Math.min(1, v));
     }
 
-    /** Largest 2w×2h step `downscale` takes (4 MB, freed at once): 1 GB TVs build tiles while Home is open. */
     private static final long SMOOTH_STEP_PIXELS = 1_000_000;
 
     /**

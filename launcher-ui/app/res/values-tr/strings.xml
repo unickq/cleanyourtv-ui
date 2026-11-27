@@ -8,8 +8,6 @@
     <string name="all">"Tümü"</string>
     <string name="all_ages">"Genel izleyici"</string>
     <string name="all_apps">"Tüm Uygulamalar"</string>
-    <string name="system_apps_in_all_apps">"Sistem uygulamalarını göster"</string>
-    <string name="apps_settings">"Uygulama Ayarları"</string>
     <string name="animation">"Animasyon"</string>
     <string name="any_year">"Tüm yıllar"</string>
     <string name="app_settings">"Uygulama ayarları"</string>
@@ -24,6 +22,7 @@
     <string name="born_prefix">"Doğum: "</string>
     <string name="buy">"Satın al"</string>
     <string name="cancel">"İptal"</string>
+    <string name="cancel_2">"İptal"</string>
     <string name="canceled">"İptal edildi"</string>
     <string name="cartoons">"Çizgi Filmler"</string>
     <string name="cast">"Oyuncular"</string>
@@ -33,9 +32,6 @@
     <string name="clear">"Temizle"</string>
     <string name="clock_and_aurora">"Saat ve Aurora"</string>
     <string name="clock_format">"Saat biçimi"</string>
-    <string name="at_power_on">"Açılışta"</string>
-    <string name="power_on_tv">"TV\'nin seçimi"</string>
-    <string name="power_on_hint">"Yalnızca tam açılıştan sonra, bekleme modundan değil."</string>
     <string name="close">"Kapat"</string>
     <string name="connect_tmdb_account">"TMDB hesabını bağla"</string>
     <string name="connect_your_tmdb_account">"TMDB hesabınızı bağlayın"</string>
@@ -108,11 +104,9 @@
     <string name="getting_ready">"Hazırlanıyor…"</string>
     <string name="go_to_settings">"Ayarlar\'a git"</string>
     <string name="hdmi_inputs">"HDMI Girişleri"</string>
-    <string name="app_store">"Uygulama mağazası"</string>
-    <string name="add_app_store_button">"Mağaza düğmesini ekle"</string>
-    <string name="remove_app_store_button">"Mağaza düğmesini kaldır"</string>
     <string name="hidden">"Gizli"</string>
     <string name="hide">"“"</string>
+    <string name="hide_purchases">"Satın alma seçeneklerini gizle"</string>
     <string name="hide_2">"Gizle"</string>
     <string name="hide_from_the_menu">"Menüden gizle"</string>
     <string name="high_prefix">". En yüksek "</string>
@@ -175,20 +169,11 @@
     <string name="no_tmdb_key">"TMDB anahtarı yok"</string>
     <string name="tmdb_key_missing_build_hint">"TMDB anahtarı yok: anahtarınızı launcher-ui/config.properties dosyasına ekleyip yeniden kurun."</string>
     <string name="no_weather_data_right_now">"Şu anda hava durumu verisi yok."</string>
+    <string name="not_connected">"Bağlı değil (İsteğe bağlı)"</string>
     <string name="not_connected_2">"Bağlı değil (İsteğe bağlı)"</string>
     <string name="not_installed">"Yüklü değil"</string>
-    <string name="now_playing_announce">"Şimdi çalıyor: %1$s"</string>
-    <string name="now_playing_hint">"Çalanın adı, sanatçısı ve uygulaması. Hiçbir şey TV\'den çıkmaz."</string>
-    <string name="now_playing_hint_not_allowed">"Bilgisayardan NOW_PLAYING=1 ile izin verin."</string>
-    <string name="now_playing_not_allowed">"İzin verilmedi"</string>
-    <string name="now_playing_widget">"Şimdi çalıyor widget\'ı"</string>
     <string name="not_on_any_streaming_service_in_the_region_right_now">"Şu anda bölgenizdeki hiçbir dijital platformda yer almıyor."</string>
     <string name="not_on_the_shelf">"rafta değil"</string>
-    <string name="inputs_edit_hint">"OK bir girişi gösterir veya gizler. ← → sırayı değiştirir."</string>
-    <string name="in_the_inputs_place_prefix">"girişlerde, sıra "</string>
-    <string name="not_in_the_inputs">"girişlerde değil"</string>
-    <string name="input_hidden">"Gizli"</string>
-    <string name="live_tv_button">"Canlı TV tuşu"</string>
     <string name="nothing_found">"Hiçbir şey bulunamadı."</string>
     <string name="nothing_here_yet_open_a_title_to_add_it">"Henüz içerik yok. Eklemek için bir içeriği açın."</string>
     <string name="nothing_matches_this_filter">"Bu filtreyle eşleşen içerik bulunamadı."</string>
@@ -204,8 +189,6 @@
     <string name="on_the_shelf_place_prefix">"rafta, sıra "</string>
     <string name="on_your_services_data_from_tmdb">"Platformlarınızdaki içerikler · TMDB"</string>
     <string name="open_anyway">"Yine de aç"</string>
-    <string name="opens_prefix">"uygulama: "</string>
-    <string name="opens_the_title_in_prefix">"içerik şurada açılır: "</string>
     <string name="original">"Orijinal"</string>
     <string name="save_category_filter_hint">"Filtreden kategori ve yıl seçin, menüye kaydedin"</string>
     <string name="pick_something_in_the_filter_first">"Önce filtreden bir seçim yapın."</string>
@@ -246,8 +229,6 @@
     <string name="saved_to_the_menu">"Menüye kaydedildi"</string>
     <string name="screensaver">"Ekran Koruyucu"</string>
     <string name="screensaver_preview">"Ekran koruyucu, önizleme"</string>
-    <string name="screensaver_ok_hint">"%1$s üzerinde izlemek için OK\'e basın · diğer tuşlar kapatır"</string>
-    <string name="screensaver_ok_opens_title">"Ekran koruyucuda OK başlığı açar"</string>
     <string name="search">"Ara"</string>
     <string name="side_menu_edit_hint">"Ara, Ana Sayfa ve Listem her zaman en üstte kalır. Öğe üzerinde OK: taşı, gizle veya kaldır."</string>
     <string name="search_movie_via_iptv">"Filmi IPTV\'de ara"</string>
@@ -267,10 +248,6 @@
     <string name="settings_2">"Ayarlar"</string>
     <string name="shelf">"Raf"</string>
     <string name="shelf_edit_hint">"OK ekler veya kaldırır (en fazla %1$d). ← → sırayı değiştirir."</string>
-    <string name="shelf_edit_hint_recent">"OK ekler veya kaldırır (en fazla %1$d). Son açılan uygulama başa gelir."</string>
-    <string name="shelf_order">"Raf sırası"</string>
-    <string name="shelf_order_manual">"Benim sıram"</string>
-    <string name="shelf_order_recent">"Son açılan önce"</string>
     <string name="shortcuts">"Kısayollar"</string>
     <string name="show">"Dizi"</string>
     <string name="show_every_service">"Tüm platformları göster"</string>
@@ -291,12 +268,6 @@
     <string name="the_link_expired_go_back_and_open_it_again">"Bağlantının süresi doldu. Geri dönüp yeniden açın."</string>
     <string name="the_tvs_own">"TV Varsayılanı"</string>
     <string name="theme">"Tema"</string>
-    <string name="top_of_screen">"Ekranın üstü"</string>
-    <string name="continue_watching">"İzlemeye devam et"</string>
-    <string name="watch_nothing">"Uygulamalarınızda yarım kalan bir şey yok."</string>
-    <string name="watch_needs_permission">"Bilgisayardan izin verin: %1$s"</string>
-    <string name="watch_time_left">"%1$s kaldı"</string>
-    <string name="watch_episode">"S%1$s B%2$s"</string>
     <string name="this_afternoon">"ÖĞLEDEN SONRA"</string>
     <string name="this_morning">"BU SABAH"</string>
     <string name="tmdb_attribution">"Bu ürün TMDB API\'sini kullanır ancak TMDB tarafından onaylanmamıştır."</string>
@@ -326,8 +297,6 @@
     <string name="trending_this_week">"Bu hafta popüler"</string>
     <string name="trending_today">"Bugün popüler"</string>
     <string name="tv_settings">"TV Ayarları"</string>
-    <string name="keystone">"Keystone"</string>
-    <string name="screen_mirroring">"Ekran Yansıtma"</string>
     <string name="tv_settings_2">"TV ayarları"</string>
     <string name="type">"Tür"</string>
     <string name="type_the_citys_name">"Şehir adını girin"</string>
@@ -345,13 +314,13 @@
     <string name="youtube_button">"YouTube tuşu"</string>
 
     <string name="count_from_tmdb">%1$s · TMDB verileri</string>
+    <string name="kinopub_fresh">"KinoPub yenilikleri"</string>
+    <string name="kinopub_watching">"İzliyorum"</string>
+    <string name="kinopub_popular_movies">"Popüler filmler"</string>
+    <string name="kinopub_popular_shows">"Popüler diziler"</string>
     <plurals name="titles">
         <item quantity="one">%1$d başlık</item>
         <item quantity="other">%1$d başlık</item>
-    </plurals>
-    <plurals name="seasons">
-        <item quantity="one">%1$d sezon</item>
-        <item quantity="other">%1$d sezon</item>
     </plurals>
 
     <string name="weather_clear_day">"Güneşli"</string>
@@ -370,22 +339,69 @@
     <string name="weather_range_wide">"Y:%1$s   D:%2$s"</string>
     <string name="weather_minutes_ago">"%1$d dk önce"</string>
     <string name="weather_hours_ago">"%1$d sa önce"</string>
+    <string name="duration_minutes">"%1$d dk"</string>
+    <string name="duration_hours_minutes">"%1$d sa %2$d dk"</string>
+    <string name="continue_watching">İzlemeye devam et</string>
+    <string name="watch_next_source">Android TV uygulamalarından</string>
+    <string name="watch_next_allow">İzleme listesine erişime izin ver</string>
+    <string name="watch_next_empty">Henüz hiçbir uygulama izlemeye devam edilecek içerik paylaşmadı.</string>
+    <string name="watch_next_unavailable">Android TV izleme listesi kullanılamıyor.</string>
+    <string name="my_quotes">Kurlarım</string>
+    <string name="add_currency_pair">Döviz çifti ekle</string>
+    <string name="invalid_currency_pair">EUR/RON gibi bir döviz çifti girin.</string>
+    <string name="duplicate_currency_pair">Bu çift zaten listede.</string>
+    <string name="system_apps_in_all_apps">"Sistem uygulamalarını göster"</string>
+    <string name="at_power_on">"Açılışta"</string>
+    <string name="power_on_tv">"TV\'nin seçimi"</string>
+    <string name="app_store">"Uygulama mağazası"</string>
+    <string name="add_app_store_button">"Mağaza düğmesini ekle"</string>
+    <string name="remove_app_store_button">"Mağaza düğmesini kaldır"</string>
+    <string name="now_playing_announce">"Şimdi çalıyor: %1$s"</string>
+    <string name="now_playing_hint">"Çalanın adı, sanatçısı ve uygulaması. Hiçbir şey TV\'den çıkmaz."</string>
+    <string name="now_playing_hint_not_allowed">"Bilgisayardan NOW_PLAYING=1 ile izin verin."</string>
+    <string name="now_playing_not_allowed">"İzin verilmedi"</string>
+    <string name="now_playing_widget">"Şimdi çalıyor widget\'ı"</string>
+    <string name="live_tv_button">"Canlı TV tuşu"</string>
+    <string name="screensaver_ok_hint">"%1$s üzerinde izlemek için OK\'e basın · diğer tuşlar kapatır"</string>
+    <string name="screensaver_ok_opens_title">"Ekran koruyucuda OK başlığı açar"</string>
+    <string name="shelf_order">"Raf sırası"</string>
+    <string name="shelf_order_manual">"Benim sıram"</string>
+    <string name="shelf_order_recent">"Son açılan önce"</string>
+    <string name="top_of_screen">"Ekranın üstü"</string>
+    <string name="watch_nothing">"Uygulamalarınızda yarım kalan bir şey yok."</string>
+    <string name="watch_needs_permission">"Bilgisayardan izin verin: %1$s"</string>
+    <string name="watch_time_left">"%1$s kaldı"</string>
+    <string name="watch_episode">"S%1$s B%2$s"</string>
+    <string name="keystone">"Keystone"</string>
+    <string name="screen_mirroring">"Ekran Yansıtma"</string>
     <string name="weather_rain_now">"Şu an yağmur yağıyor"</string>
     <string name="weather_rain_in_hours">"%1$d sa sonra yağmur"</string>
-    <string name="weather_day_range">"%1$s: en yüksek %2$s, en düşük %3$s"</string>
-    <string name="next_days_suffix_prefix">" Önümüzdeki günler: "</string>
     <string name="forecast">"Tahmin"</string>
     <string name="forecast_next_hours">"Önümüzdeki saatler"</string>
     <string name="forecast_next_5_days">"Önümüzdeki 5 gün"</string>
-    <string name="duration_minutes">"%1$d dk"</string>
-    <string name="duration_hours_minutes">"%1$d sa %2$d dk"</string>
-    <string name="sleep_timer">"Uyku zamanlayıcısı"</string>
     <string name="sleep_minutes">"%1$d dk"</string>
     <string name="sleep_left">"%1$d dk kaldı"</string>
     <string name="sleep_unavailable">"Tuş hizmeti gerekli"</string>
-    <string name="sleep_unavailable_why">"Uyku zamanlayıcısı TV\'yi kumanda tuşları hizmetiyle kapatır; bu hizmet bu TV\'de kapalı. Bir bilgisayardan açın: KEY_SERVICE=1 launcher-ui/build-and-install.sh"</string>
     <string name="sleep_warning">"TV %1$d sn içinde kapanacak"</string>
     <string name="sleep_more">"15 dakika daha"</string>
     <string name="sleep_keep_on">"TV açık kalsın"</string>
     <string name="sleep_now">"Şimdi kapat"</string>
+    <string name="inputs_edit_hint">"OK bir girişi gösterir veya gizler. ← → sırayı değiştirir."</string>
+    <string name="input_hidden">"Gizli"</string>
+    <string name="shelf_edit_hint_recent">"OK ekler veya kaldırır (en fazla %1$d). Son açılan uygulama başa gelir."</string>
+    <string name="sleep_timer">"Uyku zamanlayıcısı"</string>
+    <string name="sleep_unavailable_why">"Uyku zamanlayıcısı TV\'yi kumanda tuşları hizmetiyle kapatır; bu hizmet bu TV\'de kapalı. Bir bilgisayardan açın: KEY_SERVICE=1 launcher-ui/build-and-install.sh"</string>
+    <string name="apps_settings">"Uygulama Ayarları"</string>
+    <string name="power_on_hint">"Yalnızca tam açılıştan sonra, bekleme modundan değil."</string>
+    <string name="in_the_inputs_place_prefix">"girişlerde, sıra "</string>
+    <string name="not_in_the_inputs">"girişlerde değil"</string>
+    <string name="weather_day_range">"%1$s: en yüksek %2$s, en düşük %3$s"</string>
+    <string name="next_days_suffix_prefix">" Önümüzdeki günler: "</string>
+    <plurals name="seasons">
+        <item quantity="one">%1$d sezon</item>
+        <item quantity="other">%1$d sezon</item>
+    </plurals>
+    <string name="voice_search">"Sesli arama"</string>
+    <string name="voice_search_unavailable">"Bu televizyonda sesli arama kullanılamıyor."</string>
+    <string name="mute_navigation_sounds">"Gezinme seslerini kapat"</string>
 </resources>

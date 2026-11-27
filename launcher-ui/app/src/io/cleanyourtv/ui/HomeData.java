@@ -22,6 +22,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -59,6 +61,39 @@ final class HomeData {
         return Prefs.quotes() ? active().length : 0;
     }
 
+    static boolean quotesVisible() {
+        return Prefs.quotes() && (active().length > 0 || !Prefs.fxPairs().isEmpty());
+    }
+
+    static String normalizeFxPair(String input) {
+        String pair = input.trim().toUpperCase(Locale.ROOT).replaceAll("\\s*/\\s*", "/");
+        if (!pair.matches("[A-Z]{3}/[A-Z]{3}") || pair.substring(0, 3).equals(pair.substring(4))) return null;
+        try {
+            java.util.Currency.getInstance(pair.substring(0, 3));
+            java.util.Currency.getInstance(pair.substring(4));
+            return pair;
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    static final class FxRate {
+        final String date;
+        final double rate, change;
+
+        FxRate(String date, double rate, double change) {
+            this.date = date;
+            this.rate = rate;
+            this.change = change;
+        }
+
+        String text() {
+            java.text.NumberFormat format = java.text.NumberFormat.getNumberInstance(Ui.locale());
+            format.setMaximumFractionDigits(6);
+            return format.format(rate);
+        }
+    }
+
     private static volatile int[] activeCoins;
     private static volatile int activeVersion = -1;
 
@@ -84,19 +119,6 @@ final class HomeData {
     }
 
     /** 0 = raining now, > 0 = hours until the next rain, -1 = none in the next hours (the 6 the card shows). */
-    static int rainInHours(Weather w, long now) {
-        if (isRain(w.code)) return 0;
-        for (int i = 0; i < w.hourCode.size() && i < w.hours.size(); i++) {
-            if (!isRain(w.hourCode.get(i))) continue;
-            return Math.max(1, Math.round((w.hours.get(i) - now) / 3_600_000f));
-        }
-        return -1;
-    }
-
-    /** WMO drizzle, rain, showers and thunderstorms (snow is not rain). */
-    private static boolean isRain(int code) {
-        return (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || code >= 95;
-    }
 
     static String coinName(int i) {
         return i == 3 ? Strings.get(R.string.dollar) : COIN_NAMES[i];
@@ -126,6 +148,22 @@ final class HomeData {
         final List<Integer> dayCode = new ArrayList<>();
     }
 
+    /** Zero means rain now; a positive value is the next rainy forecast hour. */
+    static int rainInHours(Weather weather, long now) {
+        if (isRain(weather.code)) return 0;
+        for (int i = 0; i < weather.hours.size() && i < weather.hourCode.size(); i++) {
+            long ahead = weather.hours.get(i) - now;
+            if (ahead > 0 && isRain(weather.hourCode.get(i))) {
+                return (int) ((ahead + 3_599_999) / 3_600_000);
+            }
+        }
+        return -1;
+    }
+
+    private static boolean isRain(int code) {
+        return (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99);
+    }
+
     private static HomeData instance;
 
     static synchronized HomeData get(Context c) {
@@ -136,18 +174,99 @@ final class HomeData {
     final double[] prices = {Double.NaN, Double.NaN, Double.NaN, Double.NaN};
     /** 24 h change (%), in the same order. */
     final double[] changes = {Double.NaN, Double.NaN, Double.NaN, Double.NaN};
-    volatile long pricesAt, weatherAt;
+    volatile long pricesAt, weatherAt, fxUpdatedAt;
     volatile Weather weather = new Weather();
 
     private final SharedPreferences cache;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final Handler main = new Handler(Looper.getMainLooper());
     private final List<Listener> listeners = new ArrayList<>();
-    private volatile boolean fetchingPrices, fetchingWeather;
+    private volatile boolean fetchingPrices, fetchingWeather, fetchingFx;
+    private List<String> requestedFx = java.util.Collections.emptyList();
+    private long fxAttempt;
+    private volatile Map<String, FxRate> fxRates = java.util.Collections.emptyMap();
+
+    FxRate fxRate(String pair) { return fxRates.get(pair); }
+
+    private static FxRate parseFx(String pair, JSONObject quote) throws Exception {
+        if (!(quote.getString("base") + "/" + quote.getString("quote")).equals(pair)) throw new IOException("Unexpected currency pair");
+        String date = quote.getString("date");
+        java.time.LocalDate.parse(date);
+        double rate = quote.getDouble("rate");
+        if (!Double.isFinite(rate) || rate <= 0) throw new IOException("Invalid exchange rate");
+        double previous = quote.optDouble("previous", Double.NaN);
+        double change = previous > 0 && Double.isFinite(previous) ? (rate / previous - 1) * 100 : Double.NaN;
+        return new FxRate(date, rate, Double.isFinite(change) ? change : Double.NaN);
+    }
+
+    private static JSONObject latestFx(String pair, JSONArray history) throws Exception {
+        JSONObject latest = null, previous = null;
+        for (int i = 0; i < history.length(); i++) {
+            JSONObject row = history.getJSONObject(i);
+            String date = parseFx(pair, row).date;
+            if (latest == null || date.compareTo(latest.getString("date")) > 0) {
+                previous = latest;
+                latest = row;
+            } else if (!date.equals(latest.getString("date"))
+                    && (previous == null || date.compareTo(previous.getString("date")) > 0)) {
+                previous = row;
+            }
+        }
+        if (latest == null) throw new IOException("No exchange rates");
+        if (previous != null) latest.put("previous", previous.getDouble("rate"));
+        return latest;
+    }
+
+    private void refreshFx(long now) {
+        if (!Prefs.quotes() || fetchingFx) return;
+        List<String> pairs = Prefs.fxPairs();
+        if (pairs.isEmpty() || (pairs.equals(requestedFx) && now >= fxAttempt && now - fxAttempt < 60 * 60_000L)) return;
+        requestedFx = pairs;
+        fxAttempt = now;
+        fetchingFx = true;
+        io.execute(() -> {
+            Map<String, FxRate> rates = new HashMap<>();
+            JSONObject saved = new JSONObject();
+            for (String pair : pairs) {
+                if (!pair.equals(normalizeFxPair(pair))) continue;
+                try {
+                    String from = java.time.LocalDate.now(java.time.ZoneOffset.UTC).minusDays(14).toString();
+                    String url = "https://api.frankfurter.dev/v2/rates?base=" + pair.substring(0, 3)
+                            + "&quotes=" + pair.substring(4) + "&from=" + from;
+                    JSONObject quote = latestFx(pair, new JSONArray(get(url)));
+                    rates.put(pair, parseFx(pair, quote));
+                    saved.put(pair, quote);
+                } catch (Exception e) {
+                    FxRate previous = fxRates.get(pair);
+                    if (previous != null) rates.put(pair, previous);
+                }
+            }
+            try {
+                JSONObject old = new JSONObject(cache.getString("fxRates", "{}"));
+                for (String pair : pairs) {
+                    if (!saved.has(pair) && old.has(pair)) saved.put(pair, old.getJSONObject(pair));
+                }
+            } catch (Exception ignored) {}
+            cache.edit().putString("fxRates", saved.toString()).apply();
+            fxRates = rates;
+            fxUpdatedAt = System.currentTimeMillis();
+            fetchingFx = false;
+            notifyListeners();
+        });
+    }
     private volatile long pricesFailedAt, weatherFailedAt;
 
     private HomeData(Context c) {
         cache = c.getSharedPreferences("homedata", Context.MODE_PRIVATE);
+        Map<String, FxRate> savedFx = new HashMap<>();
+        try {
+            JSONObject stored = new JSONObject(cache.getString("fxRates", "{}"));
+            for (String pair : Prefs.fxPairs()) {
+                JSONObject quote = stored.optJSONObject(pair);
+                if (quote != null) savedFx.put(pair, parseFx(pair, quote));
+            }
+        } catch (Exception ignored) {}
+        fxRates = savedFx;
         try {
             if (Prefs.quotes()) {
                 String p = cache.getString("prices", null);
@@ -224,6 +343,7 @@ final class HomeData {
                 }
             });
         }
+        refreshFx(now);
     }
 
     private static boolean failedRecently(long at, long now) {
@@ -439,6 +559,15 @@ final class HomeData {
                 : new SimpleDateFormat(Ui.es || Ui.ru || Ui.uk || Ui.tur || Ui.he ? "HH:mm" : Ui.de ? "HH 'Uhr'" : "HH'h'", Ui.locale()).format(new java.util.Date(at)));
     }
 
+    /** How long ago the data was fetched, if it's stale (no internet): "12 min ago". */
+    static String staleness(long at, long every) {
+        if (at == 0) return "";
+        long age = System.currentTimeMillis() - at;
+        if (age < every * 2) return "";
+        long minutes = age / 60_000;
+        return minutes < 60 ? Strings.get(R.string.weather_minutes_ago, minutes)
+                : Strings.get(R.string.weather_hours_ago, minutes / 60);
+    }
     /** "Mon", "Seg", "Mo": a day's short name for the card, without the trailing dot some languages add. */
     static String weekday(long at) {
         return Ui.once("weekday", at, () -> {
@@ -451,15 +580,5 @@ final class HomeData {
     /** "Monday", "segunda-feira": a day's full name, for TalkBack. */
     static String weekdayName(long at) {
         return Ui.once("weekdayName", at, () -> new SimpleDateFormat("EEEE", Ui.locale()).format(new java.util.Date(at)));
-    }
-
-    /** How long ago the data was fetched, if it's stale (no internet): "12 min ago". */
-    static String staleness(long at, long every) {
-        if (at == 0) return "";
-        long age = System.currentTimeMillis() - at;
-        if (age < every * 2) return "";
-        long minutes = age / 60_000;
-        return minutes < 60 ? Strings.get(R.string.weather_minutes_ago, minutes)
-                : Strings.get(R.string.weather_hours_ago, minutes / 60);
     }
 }

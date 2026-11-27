@@ -229,13 +229,28 @@ final class Prefs {
 
     static void setCurrency(String currency) { put("currency", currency.trim().toUpperCase(Locale.ROOT)); }
 
+    static final int MAX_FX_PAIRS = 4;
+
+    static List<String> fxPairs() {
+        String saved = sp().getString("fxPairs", "");
+        return saved.isEmpty() ? new ArrayList<>() : new ArrayList<>(java.util.Arrays.asList(saved.split(",")));
+    }
+
+    static void setFxPairs(List<String> pairs) { put("fxPairs", String.join(",", pairs)); }
+    static boolean appRecommendations() { return sp().getBoolean("appRecommendations", true); }
+    static void setAppRecommendations(boolean on) { put("appRecommendations", on); }
+    static boolean groupExploreServices() { return sp().getBoolean("groupExploreServices", true); }
+    static void setGroupExploreServices(boolean on) { put("groupExploreServices", on); }
+    static boolean muteNavigationSounds() { return sp().getBoolean("muteNavigationSounds", true); }
+    static void setMuteNavigationSounds(boolean on) { put("muteNavigationSounds", on); }
+
     // MARK: - Widgets and coins
 
     static boolean weather() { return sp().getBoolean("weather", true); }
     static void setWeather(boolean on) { put("weather", on); }
 
-    /** Wi-Fi or Ethernet and a USB drive, as small icons by the home screen's round buttons. Off unless config.json sets it. */
-    static boolean statusIcons() { return sp().getBoolean("statusIcons", false); }
+    /** Network, USB and Bluetooth audio indicators by the home screen’s round buttons. */
+    static boolean statusIcons() { return sp().getBoolean("statusIcons", true); }
     static void setStatusIcons(boolean on) { put("statusIcons", on); }
     /** The weather card's forecast: "hours" (the next 6 hours, as before) or "days" (the next 5 days). */
     static String forecast() { return "days".equals(sp().getString("forecast", "hours")) ? "days" : "hours"; }
@@ -322,6 +337,15 @@ final class Prefs {
 
     static void setStoreButton(boolean on) { put("storeButton", on); }
 
+    static boolean hasInputSettings() { return sp().contains("inputsHidden") || sp().contains("inputsOrder"); }
+
+    static List<String> hdmiOrder() {
+        return java.util.Arrays.asList(sp().getString("hdmiOrder", "").split(","));
+    }
+
+    static boolean hdmiHidden(String id) { return sp().getBoolean("hdmiHidden." + id, false); }
+    static String liveHdmi() { return sp().getString("liveHdmi", ""); }
+
     // MARK: - Hidden apps
 
     /** Packages kept out of All Apps (config.json "hidden_apps"), on top of HomeApps' own list. */
@@ -377,6 +401,15 @@ final class Prefs {
     /** Picks from every provider in the region, not only the ones with an app on the TV. */
     static boolean showAllProviders() { return sp().getBoolean("showAllProviders", false); }
     static void setShowAllProviders(boolean on) { put("showAllProviders", on); }
+
+    static boolean hideServicesWithoutApps() { return sp().getBoolean("hideServicesWithoutApps", false); }
+    static void setHideServicesWithoutApps(boolean on) { put("hideServicesWithoutApps", on); }
+
+    static boolean hideRentals() { return sp().getBoolean("hideRentals", false); }
+    static void setHideRentals(boolean on) { put("hideRentals", on); }
+
+    static boolean hidePurchases() { return sp().getBoolean("hidePurchases", false); }
+    static void setHidePurchases(boolean on) { put("hidePurchases", on); }
 
     // MARK: - Trailer player
 
@@ -492,10 +525,10 @@ final class Prefs {
     /** The TV input (its id) the "live" action opens instead of Live TV, or "" for Live TV. */
     static String liveButton() {
         String v = button(LIVE_BUTTON);
-        return v == null ? "" : v;
+        return v == null ? liveHdmi() : v;
     }
 
     static void setLiveButton(String inputId) {
-        setButton(LIVE_BUTTON, inputId == null || inputId.isEmpty() ? null : inputId);
+        setButton(LIVE_BUTTON, inputId == null ? "" : inputId);
     }
 }

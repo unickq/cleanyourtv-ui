@@ -122,7 +122,7 @@ public class SettingsActivity extends Activity {
 
     static final class SettingsView extends View implements Choreographer.FrameCallback {
         private static final int MAIN = 0, HOME_SETTINGS = 2, REMOTE_KEYS = 3, PICKER = 4, SHELF_EDIT = 5;
-        private static final float LIST_ROW_H = 68, LIST_ROW_GAP = 6;
+        private static final float LIST_ROW_H = 68, LIST_ROW_GAP = 6, HOME_ROW_H = 57, HOME_ROW_STEP = 62;
         private static final int PICK_VISIBLE = 9;
         private static final float LIST_X = 1000, LIST_R = 1824, LIST_TOP = 186, ROW_H = 74, ROW_GAP = 8;
         private static final int AMBER = 0xFFFFC266, INK = 0xFF1C1C1E;
@@ -131,12 +131,12 @@ public class SettingsActivity extends Activity {
         private final Scene scene = new Scene();
         private final Handler handler = new Handler(Looper.getMainLooper());
         private final Spring[] pop = new Spring[20];
-        private boolean playingAllowed;   // NowPlaying.allowed: read when the settings show (a binder call, not per frame)
         private final List<String> appPkgs = new ArrayList<>(), appLabels = new ArrayList<>();
         // The list picker (the app of a remote button): what it shows, which one is in use, where we are.
         private final List<String> pickLabels = new ArrayList<>();
         // The shelf editor: the apps it can hold (selected ones first, in order) and the selection.
         private final List<String[]> shelfRows = new ArrayList<>();
+        private boolean playingAllowed;
         private final List<String> shelfOrder = new ArrayList<>();
         // The same editor on the drawer's inputs (Settings > Inputs, #60): Live TV and every HDMI port, shown or hidden.
         private boolean editingInputs, liveRow;
@@ -149,7 +149,7 @@ public class SettingsActivity extends Activity {
         private int pickFor, pickCurrent, pickScroll, keysScroll;   // pickFor: the remote button (index + 1)
         private static final int PICK_CITY = 0, PICK_SLEEP = -1;   // PICK_SLEEP: Sleep Timer's choices
         /** Main menu: the Sleep Timer row, just above TV Settings (the last row). */
-        private static final int MAIN_SLEEP = 7;
+        private static final int MAIN_SLEEP = 8;
         private final List<String[]> cities = new ArrayList<>();
         private String cityStatus = "";
         // The sleep timer's row: minutes left (0: off) and whether the key service can turn the TV off; read by the poll.
@@ -250,7 +250,7 @@ public class SettingsActivity extends Activity {
                             Strings.get(R.string.home_settings),
                             Strings.get(R.string.shelf), Strings.get(R.string.inputs), Strings.get(R.string.remote_buttons),
                             Strings.get(R.string.services), Strings.get(R.string.tmdb_account_prefix_2) + account(),
-                            Strings.get(R.string.sleep_timer) + ", " + sleepValue(), Strings.get(R.string.tv_settings)};
+                            Strings.get(R.string.kinopub_account), Strings.get(R.string.sleep_timer) + ", " + sleepValue(), Strings.get(R.string.tv_settings)};
                     return row < names.length ? names[row] : "";
                 }
                 case HOME_SETTINGS: {
@@ -301,11 +301,11 @@ public class SettingsActivity extends Activity {
         private RectF rowBox(int row) {
             float top, height;
             if (screen == MAIN) {
-                top = LIST_TOP + row * (ROW_H + ROW_GAP);
+                top = LIST_TOP + row * (ROW_H + ROW_GAP) - mainScroll();
                 height = ROW_H;
             } else {
-                top = LIST_TOP + 20 + row * listPitch();
-                height = listRowH();
+                top = LIST_TOP + 20 + row * (screen == HOME_SETTINGS ? listPitch() : LIST_ROW_H + LIST_ROW_GAP);
+                height = screen == HOME_SETTINGS ? listRowH() : LIST_ROW_H;
             }
             focusBox.set(LIST_X * k, top * k, LIST_R * k, (top + height) * k);
             return focusBox;
@@ -374,7 +374,7 @@ public class SettingsActivity extends Activity {
 
         private int rowCount() {
             switch (screen) {
-                case MAIN: return 9;
+                case MAIN: return 10;
                 case HOME_SETTINGS: return settingLabels().length;
                 case PICKER: return Math.min(PICK_VISIBLE, pickLabels.size());
                 case SHELF_EDIT: return Math.min(PICK_VISIBLE, shelfRows.size());
@@ -417,10 +417,19 @@ public class SettingsActivity extends Activity {
             if (screen == MAIN) drawMain(c); else if (screen == PICKER) drawPicker(c); else if (screen == SHELF_EDIT) drawShelfEditor(c); else drawList(c);
         }
 
+        private float mainScroll() {
+            float bottom = LIST_TOP + (focus + 1) * (ROW_H + ROW_GAP);
+            if (focus == rowCount() - 1) bottom += 124;   // include the recommendations and TMDB credit
+            return Math.max(0, bottom - 1008);
+        }
+
         private void drawMain(Canvas c) {
             String[] labels = {Strings.get(R.string.screensaver), Strings.get(R.string.home_settings),
                     Strings.get(R.string.shelf), Strings.get(R.string.inputs), Strings.get(R.string.remote_buttons),
-                    Strings.get(R.string.services), Strings.get(R.string.tmdb_account), Strings.get(R.string.sleep_timer), Strings.get(R.string.tv_settings)};
+                    Strings.get(R.string.services), Strings.get(R.string.tmdb_account), Strings.get(R.string.kinopub_account), Strings.get(R.string.sleep_timer), Strings.get(R.string.tv_settings)};
+            c.save();
+            c.clipRect((LIST_X - 20) * k, (LIST_TOP - 12) * k, (LIST_R + 20) * k, 1040 * k);
+            c.translate(0, -mainScroll() * k);
             for (int i = 0; i < labels.length; i++) {
                 float y = (LIST_TOP + i * (ROW_H + ROW_GAP)) * k;
                 rowRect.set(LIST_X * k, y, LIST_R * k, y + ROW_H * k);
@@ -433,17 +442,18 @@ public class SettingsActivity extends Activity {
                     // Off, the minutes left, or (dimmed) that it needs the key service.
                     rowValue.setColor(sleepReady ? blend(0x8CFFFFFF, 0x8C1C1C1E, f) : blend(0x59FFFFFF, 0x591C1C1E, f));
                     c.drawText(sleepValue(), right, base, rowValue);
-                } else if (i == 0 || i == 6) {   // 6: TMDB account
+                } else if (i == 0 || i == 6 || i == 7) {   // 6: TMDB account
                     rowValue.setColor(blend(0x8CFFFFFF, 0x8C1C1C1E, f));
                     // The screensaver's style: ← → change it (shown while focused), OK shows it.
                     String style = styleName(Prefs.screensaverStyle());
-                    c.drawText(i == 6 ? account() : f > 0.5f ? "‹  " + style + "  ›" : style, right, base, rowValue);
+                    c.drawText(i == 7 ? Strings.get(KinoPub.connected(getContext()) ? R.string.connected : R.string.not_connected) : i == 6 ? account() : f > 0.5f ? "‹  " + style + "  ›" : style, right, base, rowValue);
                 } else {
                     float cw = Symbols.width(getContext(), "chevron_right", 22 * k);
                     Symbols.draw(getContext(), c, "chevron_right", right - cw / 2, rowRect.centerY(), 22 * k, blend(0x66FFFFFF, 0x991C1C1E, f));
                 }
             }
             drawRecs(c, (LIST_TOP + labels.length * (ROW_H + ROW_GAP) + 46) * k);
+            c.restore();
         }
 
         private String sleepValue() {
@@ -501,10 +511,11 @@ public class SettingsActivity extends Activity {
         }
 
         private static String versionName(Context c) {
+            String commit = Config.GIT_COMMIT.isEmpty() ? "" : " · " + Config.GIT_COMMIT;
             try {
-                return "CleanYourTV UI " + c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionName;
+                return "CleanYourTV UI " + c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionName + commit;
             } catch (android.content.pm.PackageManager.NameNotFoundException e) {
-                return "CleanYourTV UI";
+                return "CleanYourTV UI" + commit;
             }
         }
 
@@ -624,6 +635,8 @@ public class SettingsActivity extends Activity {
             l.add("Ethereum");
             l.add("Solana");
             if (dollar()) l.add(Strings.get(R.string.dollar));
+            l.add(Strings.get(R.string.my_quotes));
+            l.add(Strings.get(R.string.mute_navigation_sounds));
             return l.toArray(new String[0]);
         }
 
@@ -653,7 +666,9 @@ public class SettingsActivity extends Activity {
             v[QUOTES_ROW] = onOff(Prefs.quotes());
             v[NOW_PLAYING_ROW] = playingValue();
             // No quotes widget, nowhere to show prices: the coins read as off (and stay locked) until it is back on.
-            for (int i = COIN_ROWS; i < v.length; i++) v[i] = onOff(Prefs.quotes() && Prefs.coin(i - COIN_ROWS));
+            for (int i = COIN_ROWS; i < v.length - 2; i++) v[i] = onOff(Prefs.quotes() && Prefs.coin(i - COIN_ROWS));
+            v[v.length - 2] = "›";
+            v[v.length - 1] = onOff(Prefs.muteNavigationSounds());
             return v;
         }
 
@@ -723,6 +738,11 @@ public class SettingsActivity extends Activity {
                 Prefs.setButton(b.id, appPkgs.get(next));
                 return;
             }
+            if (focus == settingLabels().length - 1) {
+                Prefs.setMuteNavigationSounds(!Prefs.muteNavigationSounds());
+                return;
+            }
+            if (focus == settingLabels().length - 2) return;
             switch (focus) {
                 case 0: {
                     int at = java.util.Arrays.asList(LANGUAGES).indexOf(Prefs.language());
@@ -769,6 +789,57 @@ public class SettingsActivity extends Activity {
                     break;
             }
             HomeData.get(getContext()).settingsChanged();
+        }
+
+        private void editQuotes() {
+            List<String> pairs = Prefs.fxPairs();
+            List<String> rows = new ArrayList<>(pairs);
+            if (pairs.size() < Prefs.MAX_FX_PAIRS) rows.add(Strings.get(R.string.add_currency_pair));
+            new AlertDialog.Builder(activity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    .setTitle(Strings.get(R.string.my_quotes))
+                    .setItems(rows.toArray(new String[0]), (dialog, which) -> {
+                        if (which == pairs.size()) {
+                            addCurrencyPair(pairs);
+                        } else {
+                            String pair = pairs.get(which);
+                            new AlertDialog.Builder(activity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                                    .setTitle(pair)
+                                    .setPositiveButton(Strings.get(R.string.remove_2), (confirm, button) -> {
+                                        pairs.remove(pair);
+                                        Prefs.setFxPairs(pairs);
+                                        editQuotes();
+                                    })
+                                    .setNegativeButton(Strings.get(R.string.cancel), (confirm, button) -> editQuotes())
+                                    .show();
+                        }
+                    })
+                    .setNegativeButton(Strings.get(R.string.close), null)
+                    .show();
+        }
+
+        private void addCurrencyPair(List<String> pairs) {
+            EditText field = new EditText(activity);
+            field.setSingleLine(true);
+            field.setHint("EUR/RON");
+            AlertDialog dialog = new AlertDialog.Builder(activity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    .setTitle(Strings.get(R.string.add_currency_pair))
+                    .setView(field)
+                    .setPositiveButton(Strings.get(R.string.save), null)
+                    .setNegativeButton(Strings.get(R.string.cancel), (d, which) -> editQuotes())
+                    .create();
+            dialog.show();
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                String pair = HomeData.normalizeFxPair(field.getText().toString());
+                if (pair == null || pairs.contains(pair)) {
+                    field.setError(Strings.get(pair == null ? R.string.invalid_currency_pair : R.string.duplicate_currency_pair));
+                    return;
+                }
+                pairs.add(pair);
+                Prefs.setFxPairs(pairs);
+                Prefs.setQuotes(true);
+                dialog.dismiss();
+                editQuotes();
+            });
         }
 
         private void askCity() {
@@ -1100,7 +1171,7 @@ public class SettingsActivity extends Activity {
                 rowRect.set(LIST_X * k, y, LIST_R * k, y + rowH * k);
                 float f = drawRowBackground(c, i);
                 rowLabel.setColor(blend(0xF2FFFFFF, INK, f));
-                boolean locked = i == NOW_PLAYING_ROW ? !playingAllowed : i >= COIN_ROWS && !Prefs.quotes();
+                boolean locked = i == NOW_PLAYING_ROW ? !playingAllowed : i >= COIN_ROWS && i < labels.length - 2 && !Prefs.quotes();
                 rowValue.setColor(blend(locked ? 0x59FFFFFF : 0xB3FFFFFF, locked ? 0x591C1C1E : 0xB31C1C1E, f));
                 if (locked) rowLabel.setColor(blend(0x73FFFFFF, 0x731C1C1E, f));
                 float base = rowRect.centerY() + Ui.halfCap(rowLabel);
@@ -1170,6 +1241,9 @@ public class SettingsActivity extends Activity {
                 return;
             } else if (screen == REMOTE_KEYS) {
                 openPicker(keysScroll + focus + 1);
+            } else if (screen == HOME_SETTINGS && focus == settingLabels().length - 2) {
+                editQuotes();
+                return;
             } else if (screen == HOME_SETTINGS && focus == CITY_ROW) {
                 askCity();
                 return;
@@ -1206,6 +1280,8 @@ public class SettingsActivity extends Activity {
             } else if (focus == 6) {
                 // A release APK comes without a key: it is typed here once (or pushed in config.json "tmdb_key").
                 if (Tmdb.hasKey()) activity.startActivity(new Intent(c, TmdbLoginActivity.class)); else askTmdbKey();
+            } else if (focus == 7) {
+                activity.startActivity(new Intent(c, KinoLoginActivity.class));
             } else if (focus == MAIN_SLEEP) {
                 sleepReady = SleepTimer.available(c);
                 if (!sleepReady) {   // only the key service can turn the TV off: say so, and how to turn it on

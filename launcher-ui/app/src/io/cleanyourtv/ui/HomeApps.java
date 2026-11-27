@@ -386,6 +386,13 @@ final class HomeApps {
     static List<Item> orderedInputs(Context c) {
         List<Item> inputs = allInputs(c);
         List<String> order = Prefs.inputsOrder(), hidden = Prefs.inputsHidden();
+        if (order == null && hidden.isEmpty() && !Prefs.hasInputSettings()) {
+            List<String> oldOrder = Prefs.hdmiOrder();
+            order = new ArrayList<>();
+            order.add("live");
+            for (String id : oldOrder) for (Item it : inputs) if (id.equals(it.inputId)) order.add(it.key);
+            for (Item it : inputs) if (it.inputId != null && Prefs.hdmiHidden(it.inputId)) hidden.add(it.key);
+        }
         if (order == null && hidden.isEmpty()) return inputs;
         List<String> keys = new ArrayList<>();
         for (Item it : inputs) keys.add(it.key);
@@ -609,7 +616,10 @@ final class HomeApps {
                 if (intent != null) intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
                 break;
             case LIVE_TV:
-                intent = liveTv(a);
+                Item input = liveButtonInput(a);
+                intent = input == null ? null : inputIntent(a, input);
+                if (intent != null) RemoteKeys.rememberInput(a, input.inputId);
+                else intent = liveTv(a);
                 break;
             case INPUT:
                 intent = inputIntent(a, it);

@@ -44,9 +44,9 @@ import java.util.concurrent.Executors;
 final class Recs {
     static final class Pick {
         int id;
-        String kind;            // "movie" or "tv"
-        String title, backdrop, meta = "", app, pkg;
-        boolean detailed;
+        String kind;            // TMDB "movie"/"tv" or KinoPub.KIND
+        String title, backdrop, poster, meta = "", app, pkg;
+        boolean detailed, kinoNeedsSeasons;
         boolean localized;      // the title reads in the TV's language (not saved: it only orders a fresh list)
     }
 
@@ -58,9 +58,9 @@ final class Recs {
     /** Bump when what is saved for each title changes (the saved list is discarded and fetched again). */
     private static final int CACHE_VERSION = 4;
     private static final int MANHA = 0, TARDE = 1, NOITE = 2;
+    /** Service name on TMDB (part of the name, lowercase) → TV app (HomeApps key, package). */
     private static final int[] PERIOD_LABELS = {R.string.this_morning, R.string.this_afternoon, R.string.tonight};
 
-    /** Service name on TMDB (part of the name, lowercase) → TV app (HomeApps key, package). */
     private static final String[][] SERVICES = {
         {"netflix", "netflix", "com.netflix.ninja"},
         {"prime video", "prime", "com.amazon.amazonvideo.livingroom"},
@@ -100,13 +100,22 @@ final class Recs {
     private final Context context;
     private final SharedPreferences cache;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private final ExecutorService imageIo = Executors.newFixedThreadPool(2);
     private final Handler main = new Handler(Looper.getMainLooper());
     private final List<Listener> listeners = new ArrayList<>();
-    // This hour's, built and ready to draw, in the order they were last drawn: the one unused longest goes first.
+    // Shared by URL; recent services keep their visible page within the same memory budget.
     private final Map<String, Backdrop> images = new LinkedHashMap<>(16, 0.75f, true);
+    private static final long IMAGE_BYTES = Math.min(64L * 1024 * 1024, Runtime.getRuntime().maxMemory() / 4);
+    private final Map<String, Pick> imageQueue = new LinkedHashMap<>();
+    private final java.util.Set<String> imageWindow = new java.util.HashSet<>();
+    private final java.util.Set<String> visibleImages = new java.util.HashSet<>();
+    private final java.util.Set<String> imageTried = new java.util.HashSet<>();
+    private final Map<String, Long> imageFailedAt = new HashMap<>();
+    private final Map<String, java.util.Set<String>> recentPages = new LinkedHashMap<>();
     private final java.util.Set<String> pending = new java.util.HashSet<>();
     private final java.util.Set<String> asked = new java.util.HashSet<>();   // details(): once per pick and list
     private volatile List<Pick> picks = new ArrayList<>();
+    final KinoHomePicks kino;
     private volatile int period = -1;
     private volatile long listAt;
     private volatile boolean fetching;
@@ -117,6 +126,7 @@ final class Recs {
 
     private Recs(Context c) {
         context = c;
+        kino = new KinoHomePicks(c, io, main, this::notifyListeners);
         cache = c.getSharedPreferences("recs", Context.MODE_PRIVATE);
         if (cache.getInt("version", 0) != CACHE_VERSION) cache.edit().clear().putInt("version", CACHE_VERSION).apply();
         try {
@@ -149,7 +159,10 @@ final class Recs {
     }
 
     void addListener(Listener l) { if (!listeners.contains(l)) listeners.add(l); }
-    void removeListener(Listener l) { listeners.remove(l); }
+    void removeListener(Listener l) {
+        listeners.remove(l);
+        if (listeners.isEmpty()) prepareImages("", java.util.Collections.emptyList(), java.util.Collections.emptyList());
+    }
 
     static boolean hasKey(Context c) {
         return Tmdb.hasKey();
@@ -222,6 +235,15 @@ final class Recs {
         return out;
     }
 
+    static List<Pick> forApp(List<Pick> source, String pkg) {
+        List<Pick> out = new ArrayList<>();
+        if (pkg == null) return out;
+        for (Pick pick : source) {
+            if (pkg.equals(pick.pkg)) out.add(pick);
+        }
+        return out;
+    }
+
     /** "Law & Order: Special Victims Unit" → "law & order" (what comes before ":" or " - "). */
     private static String franchise(String title) {
         String t = title == null ? "" : title.toLowerCase(Locale.ROOT);
@@ -235,23 +257,82 @@ final class Recs {
         return p == null || p.app == null ? "" : SERVICE_NAME.containsKey(p.app) ? SERVICE_NAME.get(p.app) : p.app;
     }
 
-    /** The pick's ready backdrop (or null: builds it in the background and notifies when it's ready). */
+    /** Drawing only reads the cache; prepareImages owns the bounded loading window. */
     Backdrop backdrop(Pick p) {
         if (p == null || p.backdrop == null) return null;
-        final String key = p.backdrop;    // the details may swap the image midway
         synchronized (images) {
-            Backdrop b = images.get(key);
-            if (b != null) return b;
-            if (!pending.add(key)) return null;
+            return images.get(p.backdrop);
         }
-        io.execute(() -> {
-            try {
-                loadImage(p);
-            } finally {
-                synchronized (images) { pending.remove(key); }
+    }
+
+    /** Visible three first, then up to six neighbours. Replacing the window drops work not yet started. */
+    void prepareImages(String service, List<Pick> visible, List<Pick> nearby) {
+        synchronized (images) {
+            visibleImages.clear();
+            for (Pick p : visible) if (p.backdrop != null) visibleImages.add(p.backdrop);
+            if (!visibleImages.isEmpty()) {
+                recentPages.remove(service);
+                recentPages.put(service, new java.util.HashSet<>(visibleImages));
+                while (recentPages.size() > 3) recentPages.remove(recentPages.keySet().iterator().next());
             }
-        });
-        return null;
+            imageWindow.clear();
+            imageQueue.clear();
+            List<Pick> ordered = new ArrayList<>(visible);
+            ordered.addAll(nearby);
+            for (Pick p : ordered) {
+                if (p.backdrop == null || imageWindow.contains(p.backdrop)) continue;
+                if (imageWindow.size() == 9) break;
+                imageWindow.add(p.backdrop);
+                // Details may replace the source pick's URL while a worker is loading it.
+                Pick copy = new Pick();
+                copy.kind = p.kind; copy.title = p.title; copy.backdrop = p.backdrop; copy.poster = p.poster;
+                imageQueue.put(copy.backdrop, copy);
+            }
+            imageTried.retainAll(imageWindow);
+            imageFailedAt.keySet().retainAll(imageWindow);
+            long now = System.currentTimeMillis();
+            imageQueue.entrySet().removeIf(e -> images.containsKey(e.getKey()) || pending.contains(e.getKey())
+                    || (imageFailedAt.containsKey(e.getKey()) && now - imageFailedAt.get(e.getKey()) < 60_000)
+                    || (!visibleImages.contains(e.getKey()) && imageTried.contains(e.getKey())));
+            startImages();
+        }
+    }
+
+    /** Called with images locked; only two jobs are submitted, so stale work cannot pile up in the executor. */
+    private void startImages() {
+        while (pending.size() < 2 && !imageQueue.isEmpty()) {
+            String key = imageQueue.keySet().iterator().next();
+            Pick p = imageQueue.remove(key);
+            pending.add(key);
+            imageTried.add(key);
+            imageIo.execute(() -> {
+                try {
+                    synchronized (images) { if (!imageWindow.contains(key)) return; }
+                    loadImage(p);
+                } finally {
+                    synchronized (images) {
+                        pending.remove(key);
+                        startImages();
+                    }
+                }
+            });
+        }
+    }
+
+    /** Evict prefetches before recent services' visible pages, and those before the current visible page. */
+    private void pruneImages() {
+        long bytes = 0;
+        for (Backdrop b : images.values()) bytes += b.bytes();
+        java.util.Set<String> recent = new java.util.HashSet<>();
+        for (java.util.Set<String> keys : recentPages.values()) recent.addAll(keys);
+        while (!images.isEmpty() && (bytes > IMAGE_BYTES || images.size() > (light ? 18 : 4))) {
+            String victim = null;
+            for (String key : images.keySet()) if (!recent.contains(key)) { victim = key; break; }
+            if (victim == null)
+                for (String key : images.keySet()) if (!visibleImages.contains(key)) { victim = key; break; }
+            if (victim == null) victim = images.keySet().iterator().next();
+            bytes -= images.remove(victim).bytes();
+        }
     }
 
     private boolean hasImage(Pick p) {
@@ -618,24 +699,6 @@ final class Recs {
             case "news": return Strings.get(R.string.recommendation_genre_news);
             case "soap": return Strings.get(R.string.recommendation_genre_soap);
             case "talk": return Strings.get(R.string.recommendation_genre_talk);
-            case "action": return Strings.get(R.string.genre_action);
-            case "adventure": return Strings.get(R.string.genre_adventure);
-            case "animation": return Strings.get(R.string.genre_animation);
-            case "comedy": return Strings.get(R.string.genre_comedy);
-            case "crime": return Strings.get(R.string.genre_crime);
-            case "documentaries": return Strings.get(R.string.genre_documentaries);
-            case "drama": return Strings.get(R.string.genre_drama);
-            case "family": return Strings.get(R.string.genre_family);
-            case "fantasy": return Strings.get(R.string.genre_fantasy);
-            case "history": return Strings.get(R.string.genre_history);
-            case "horror": return Strings.get(R.string.genre_horror);
-            case "music": return Strings.get(R.string.genre_music);
-            case "mystery": return Strings.get(R.string.genre_mystery);
-            case "romance": return Strings.get(R.string.genre_romance);
-            case "sci-fi": return Strings.get(R.string.genre_sci_fi);
-            case "thriller": return Strings.get(R.string.genre_thriller);
-            case "war": return Strings.get(R.string.genre_war);
-            case "western": return Strings.get(R.string.genre_western);
             default: return name;
         }
     }
@@ -716,22 +779,25 @@ final class Recs {
         if (f.exists()) return;
         //noinspection ResultOfMethodCallIgnored
         f.getParentFile().mkdirs();
-        File part = new File(f.getPath() + ".part");
-        HttpURLConnection c = (HttpURLConnection) new URL(IMAGES + p.backdrop).openConnection();
-        c.setConnectTimeout(8000);
-        c.setReadTimeout(20000);
-        try (InputStream in = c.getInputStream(); FileOutputStream out = new FileOutputStream(part)) {
-            byte[] buffer = new byte[16384];
-            int n;
-            while ((n = in.read(buffer)) > 0) out.write(buffer, 0, n);
-        } catch (IOException e) {
+        // Catalogue prefetch and the image workers may download the same original concurrently.
+        File part = File.createTempFile("recs-", ".part", f.getParentFile());
+        try {
+            HttpURLConnection c = (HttpURLConnection) new URL(IMAGES + p.backdrop).openConnection();
+            c.setConnectTimeout(8000);
+            c.setReadTimeout(20000);
+            try (InputStream in = c.getInputStream(); FileOutputStream out = new FileOutputStream(part)) {
+                byte[] buffer = new byte[16384];
+                int n;
+                while ((n = in.read(buffer)) > 0) out.write(buffer, 0, n);
+            } finally {
+                c.disconnect();
+            }
+            java.nio.file.Files.move(part.toPath(), f.toPath(), java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } finally {
             //noinspection ResultOfMethodCallIgnored
             part.delete();
-            throw e;
-        } finally {
-            c.disconnect();
         }
-        if (!part.renameTo(f)) throw new IOException("couldn't save the image");
         prune(f.getParentFile());
     }
 
@@ -740,29 +806,51 @@ final class Recs {
         synchronized (images) {
             if (images.containsKey(p.backdrop)) return;
         }
-        File f = imageFile(p);
+        boolean kino = KinoPub.KIND.equals(p.kind);
+        File f = kino ? null : imageFile(p);
         try {
-            download(p);
-            BitmapFactory.Options bounds = new BitmapFactory.Options();
-            bounds.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(f.getPath(), bounds);
-            BitmapFactory.Options opts = new BitmapFactory.Options();
-            opts.inSampleSize = 1;
-            while (bounds.outWidth / (opts.inSampleSize * 2) >= Backdrop.W) opts.inSampleSize *= 2;
-            Bitmap b = BitmapFactory.decodeFile(f.getPath(), opts);
+            Bitmap b, cover = null;
+            if (kino) {
+                Images.init(context);
+                b = Images.fetch(p.backdrop);
+                if (p.backdrop.equals(p.poster)) cover = b;
+                else if (p.poster != null) cover = Images.fetch(p.poster);
+                if (b == null) b = cover;
+            } else {
+                download(p);
+                BitmapFactory.Options bounds = new BitmapFactory.Options();
+                bounds.inJustDecodeBounds = true;
+                BitmapFactory.decodeFile(f.getPath(), bounds);
+                BitmapFactory.Options opts = new BitmapFactory.Options();
+                opts.inSampleSize = 1;
+                while (bounds.outWidth / (opts.inSampleSize * 2) >= Backdrop.W) opts.inSampleSize *= 2;
+                b = BitmapFactory.decodeFile(f.getPath(), opts);
+                AppLog.w("backdrop “" + p.title + "”: " + bounds.outWidth + "×" + bounds.outHeight);
+            }
             if (b == null) throw new IOException("unreadable image");
-            AppLog.w("backdrop \u201c" + p.title + "\u201d: " + bounds.outWidth + "×" + bounds.outHeight);
+            synchronized (images) {
+                if (!imageWindow.contains(p.backdrop)) {
+                    b.recycle();
+                    if (cover != null && cover != b) cover.recycle();
+                    return;
+                }
+            }
             boolean forLight = light;
-            Backdrop backdrop = Backdrop.make(b, forLight);
+            Backdrop backdrop = Backdrop.make(b, forLight, cover);
             if (forLight != light) return;   // the design changed midway: this one is stale
             synchronized (images) {
+                if (!imageWindow.contains(p.backdrop)) return;
+                imageFailedAt.remove(p.backdrop);
                 images.put(p.backdrop, backdrop);
-                while (images.size() > (forLight ? 10 : 4)) images.remove(images.keySet().iterator().next());
+                pruneImages();
             }
             notifyListeners();
         } catch (IOException | RuntimeException | OutOfMemoryError e) {
+            synchronized (images) {
+                if (imageWindow.contains(p.backdrop)) imageFailedAt.put(p.backdrop, System.currentTimeMillis());
+            }
             //noinspection ResultOfMethodCallIgnored
-            f.delete();
+            if (f != null) f.delete();
             AppLog.w("recommendation image: " + e.getMessage());
         }
     }
@@ -772,6 +860,12 @@ final class Recs {
         java.util.Set<String> keep = new java.util.HashSet<>();
         for (Pick p : now(null)) if (p.backdrop != null) keep.add(p.backdrop);
         synchronized (images) {
+            keep.addAll(visibleImages);
+            imageQueue.clear();
+            imageWindow.clear();
+            imageTried.clear();
+            imageFailedAt.clear();
+            recentPages.clear();
             images.keySet().retainAll(keep);
         }
     }

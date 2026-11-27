@@ -2,6 +2,8 @@ package io.cleanyourtv.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -86,6 +88,22 @@ public class ServicesActivity extends Activity {
                     Prefs.setShowAllProviders(!Prefs.showAllProviders());
                     build(providers);
                 }));
+        list.addView(row("hideWithoutApps", null, Strings.get(R.string.hide_services_without_installed_apps),
+                Prefs.hideServicesWithoutApps() ? Strings.get(R.string.on) : Strings.get(R.string.off), v -> {
+                    Prefs.setHideServicesWithoutApps(!Prefs.hideServicesWithoutApps());
+                    build(providers);
+                }));
+        list.addView(row("hideRentals", null, Strings.get(R.string.hide_rentals),
+                Prefs.hideRentals() ? Strings.get(R.string.on) : Strings.get(R.string.off), v -> {
+                    Prefs.setHideRentals(!Prefs.hideRentals());
+                    build(providers);
+                }));
+        list.addView(row("hidePurchases", null, Strings.get(R.string.hide_purchases),
+                Prefs.hidePurchases() ? Strings.get(R.string.on) : Strings.get(R.string.off), v -> {
+                    Prefs.setHidePurchases(!Prefs.hidePurchases());
+                    build(providers);
+                }));
+        list.addView(kinoWatchRow());
         if (watchProviders != null && !watchProviders.isEmpty()) watchProvidersSection();
         if (providers == null) {
             TextView loading = TvUi.text(this, k, 26, Ui.regular, TvUi.DIM);
@@ -168,6 +186,16 @@ public class ServicesActivity extends Activity {
         String app = Providers.app(this, p.id, p.name);
         if (app == null) return Strings.get(R.string.no_app_on_the_tv_2);
         return (pick.isEmpty() ? Strings.get(R.string.automatic_prefix) : "") + Providers.label(this, app);
+    }
+
+    private View kinoWatchRow() {
+        Drawable icon = null;
+        try {
+            icon = getPackageManager().getApplicationIcon(KinoPub.PLAYER_PACKAGE);
+        } catch (PackageManager.NameNotFoundException ignored) {
+        }
+        return iconRow("kinowatch", icon, "KinoWatch", Strings.get(R.string.kinopub_account),
+                v -> startActivity(new Intent(this, KinoLoginActivity.class)));
     }
 
     private String trailerPlayerValue() {

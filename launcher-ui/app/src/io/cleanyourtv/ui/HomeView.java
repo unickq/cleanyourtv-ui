@@ -17,12 +17,14 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
 import android.media.tv.TvInputManager;
 import android.net.ConnectivityManager;
-import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.os.Build;
 import android.os.Environment;
+import android.net.Network;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -116,11 +118,10 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private final Scene scene = new Scene();
     private final HomeData data;
     private final Recs recs;
-    private final NowPlaying.Watch playing;   // what an app plays, in the quotes' place (#67)
+    private final NowPlaying.Watch playing;
     private final Click click;
-    private final Handler handler = new Handler(Looper.getMainLooper());
-    /** The background follows the focused pick once it has been there this long (see bgFollow). */
     private static final long BG_FOLLOW_MS = 500;
+    private final Handler handler = new Handler(Looper.getMainLooper());
     private final SharedPreferences ui;
     private final TvInputManager tvInputs;
     private final ConnectivityManager connectivity;
@@ -155,6 +156,8 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private int tab, topIndex, cardIndex;
     private int widgetIndex;    // with TalkBack on, the drawer's weather (0) or quotes (1) card can take the focus
     private List<Recs.Pick> cards = new ArrayList<>();
+    private String recommendationPackage = "";
+    private boolean appRecommendations, kinoConnected;
     // One flat run of pages, three cards each: every full page of Explore, then of Movies, then of Shows, and round
     // again. → past the last card moves on one page, ← back one; the tabs follow, and choosing a tab jumps to its
     // first page. The leftover picks of a tab's short last page are skipped, so no card is ever empty.
@@ -270,6 +273,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private int w, h;
     private float k = 1;
     private String clockText = "", dateText = "", weatherLine = "";
+    private boolean bluetoothAudio;
     private long weatherLineAt = -1;
     private int weatherLinePrefs = -1;
     private String weatherLineLanguage = "";
@@ -297,6 +301,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private final Paint tileFill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF tmp = new RectF(), cell = new RectF(), screen = new RectF();
     private final TextPaint fitPaint = new TextPaint();
+    private final StaticLayout[] kinoCardTitles = new StaticLayout[3];
     private final RectF gridCell = new RectF();
     private LinearGradient[] tileShaders = new LinearGradient[0];
     private LinearGradient tileGlow, cardSheen;
@@ -499,6 +504,8 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             updatePalette();
             checkNight(true);
             updatePicks();      // three new ones every hour
+            refreshConnections();
+            drawerDirty |= drawerOpen && System.currentTimeMillis() / 60_000 != textMinute;
             handler.postDelayed(this, 15_000);
         }
     };
@@ -590,8 +597,9 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         if (tvInputs != null) tvInputs.registerCallback(inputCallback, handler);
         startStatus();
         handler.postDelayed(tick, 15_000);
+        refreshConnections();
         playing.start();
-        if (Prefs.shelfRecent()) reorderRecent();   // before the first frame: the app just left comes first (#63)
+        if (Prefs.shelfRecent()) reorderRecent();
         if (!again) reload();
         updatePalette();
         updatePicks();
@@ -1747,7 +1755,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     // MARK: - Bottom drawer
 
     private static List<HomeApps.Item> drawerList(Context c) {
-        List<HomeApps.Item> list = HomeApps.orderedInputs(c);   // Settings > Inputs: the shown ones, in order (#60)
+        List<HomeApps.Item> list = HomeApps.orderedInputs(c);
         list.addAll(HomeApps.drawerShortcuts(c));
         return list;
     }
@@ -1788,7 +1796,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             x += tw + gap;
         }
         float cardsTop = CARDS_TOP * k, split = left + (right - left) * 0.585f;
-        boolean wx = Prefs.weather(), qt = Prefs.quotes() && HomeData.active().length > 0;
+        boolean wx = Prefs.weather(), qt = HomeData.quotesVisible();
         // A card that is off gives its room to the other one.
         weatherCard.set(left, cardsTop, qt ? split - 16 * k : right, cardsTop + CARDS_H * k);
         quotesCard.set(wx ? split + 16 * k : left, cardsTop, right, cardsTop + CARDS_H * k);
@@ -1898,7 +1906,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         for (int i = 0; i < drawerItems.size(); i++) if (i != top) drawDrawerTile(c, i);
         if (top >= 0) drawDrawerTile(c, top);
         if (Prefs.weather()) drawWeatherCard(c, weatherCard);
-        if (Prefs.quotes() && HomeData.active().length > 0) drawQuotesCard(c, quotesCard);
+        if (HomeData.quotesVisible()) drawQuotesCard(c, quotesCard);
     }
 
     /** A drawer row's title over its first button: at the button's left edge, or its right edge in Hebrew. */
@@ -1963,7 +1971,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         Symbols.draw(getContext(), c, symbol, x + sw / 2, r.top + 132 * k, 52 * k, drawerInk(0.95f));
         c.drawText(nowTemp, x + sw + 18 * k - Ui.leftBearing(bigTemp, nowTemp), r.top + 170 * k, bigTemp);
         c.drawText(HomeData.condition(wx.code, wx.isDay), x, r.top + 220 * k, cardText);
-        c.drawText(highLow, x, r.top + 258 * k, cardDim);
+        c.drawText(highLow, x, r.top + 252 * k, cardDim);
         float split = r.left + 392 * k;
         fill.setShader(null);
         fill.setColor(tone(0x1A000000, 0x24FFFFFF));
@@ -2063,7 +2071,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
      * sunrise and sunset, "12 min ago").
      */
     private String drawerCardsKey() {
-        return data.weatherAt + "|" + data.pricesAt + "|" + Prefs.version + "|" + Ui.language + "|"
+        return data.weatherAt + "|" + data.pricesAt + "|" + data.fxUpdatedAt + "|" + Prefs.version + "|" + Ui.language + "|"
                 + Float.floatToIntBits(dark()) + "|" + System.currentTimeMillis() / 60_000;
     }
 
@@ -2098,34 +2106,62 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private void drawPrices(Canvas c, RectF r) {
         float x = r.left + 34 * k, right = r.right - 34 * k;
         refreshDrawerText();
-        c.drawText(Strings.get(R.string.crypto), x, r.top + 54 * k, cardTitle);
-        c.drawText(staleText, right, r.top + 54 * k, cardDimRight);
-        float cap = Ui.cap(cardText);
+        List<String> pairs = Prefs.fxPairs();
         int[] coins = HomeData.active();
+        c.drawText(Strings.get(pairs.isEmpty() ? R.string.crypto : R.string.my_quotes), x, r.top + 54 * k, cardTitle);
+        if (coins.length > 0) c.drawText(staleText, right, r.top + 54 * k, cardDimRight);
+        float cap = Ui.cap(cardText);
+        float step = Math.min(52, 208f / Math.max(1, coins.length + pairs.size()));
+        float halfBubble = Math.min(17, step / 2 - 1) * k;
         for (int j = 0; j < coins.length; j++) {
             int i = coins[j];
-            float base = r.top + (110 + 52 * j) * k, mid = base - cap / 2;
+            float base = r.top + (110 + step * j) * k, mid = base - cap / 2;
             float gw = Glyphs.width(getContext(), HomeData.COINS[i], cap);
             Glyphs.coin(getContext(), c, HomeData.COINS[i], x + 14 * k, mid, cap, tone(L_DIM, 0xCCFFFFFF));
             c.drawText(HomeData.coinName(i), x + Math.max(gw, 28 * k) / 2 + 30 * k, base, cardText);
             c.drawText(priceText[i], right - 128 * k, base, pricePaint);
-            double change = data.changes[i];
-            if (Double.isNaN(change)) continue;
-            int color = change >= 0 ? tone(0xFF248A3D, UP_COLOR) : tone(0xFFD70015, DOWN_COLOR);
-            tmp.set(right - 108 * k, mid - 17 * k, right, mid + 17 * k);
-            fill.setShader(null);
-            fill.setColor(Ui.alpha(color, 0.2f));
-            c.drawRoundRect(tmp, 17 * k, 17 * k, fill);
-            changePaint.setColor(color);
-            c.drawText(changeText[i], tmp.centerX(), mid + Ui.halfCap(changePaint), changePaint);
+            drawQuoteChange(c, right, mid, halfBubble, data.changes[i], changeText[i]);
         }
+        for (int i = 0; i < pairs.size(); i++) {
+            String pair = pairs.get(i);
+            HomeData.FxRate rate = data.fxRate(pair);
+            float base = r.top + (110 + step * (coins.length + i)) * k;
+            c.drawText(pair, x, base, cardText);
+            String price = rate == null ? "—" : rate.text();
+            c.drawText(price, right - 128 * k, base, pricePaint);
+            if (rate != null) {
+                drawQuoteChange(c, right, base - cap / 2, halfBubble, rate.change, HomeData.change(rate.change));
+            }
+        }
+    }
+
+    private void drawQuoteChange(Canvas c, float right, float mid, float halfBubble, double change, String text) {
+        if (Double.isNaN(change)) return;
+        int color = change >= 0 ? tone(0xFF248A3D, UP_COLOR) : tone(0xFFD70015, DOWN_COLOR);
+        tmp.set(right - 108 * k, mid - halfBubble, right, mid + halfBubble);
+        fill.setShader(null);
+        fill.setColor(Ui.alpha(color, 0.2f));
+        c.drawRoundRect(tmp, halfBubble, halfBubble, fill);
+        changePaint.setColor(color);
+        c.drawText(text, tmp.centerX(), mid + Ui.halfCap(changePaint), changePaint);
     }
 
     // MARK: - Focus
 
     /** Sets the springs' targets from the current focus (snap: no animation). */
     private void retarget(boolean snap) {
-        // Only the group whose focus changed is redrawn (moving along the shelf doesn't redraw the hero or capsule).
+        if (!sheetOpen && zone == Z_SHELF && shelfIndex < shelf.size()) {
+            String pkg = shelf.get(shelfIndex).pkg;
+            if (pkg == null || (!Prefs.appRecommendations() && !KinoPub.PLAYER_PACKAGE.equals(pkg))) pkg = "";
+            if (!pkg.equals(recommendationPackage)) {
+                if (kinoSelected() || KinoPub.PLAYER_PACKAGE.equals(pkg)) showBackdrop(null);
+                recommendationPackage = pkg;
+                page = tabFirst[tab];
+                updateCards();
+                heroDirty = true;
+            }
+        }
+        // Other focus groups keep their cached drawing.
         boolean tilesChanged = aim(tileFocus, !sheetOpen && zone == Z_SHELF ? shelfIndex : -1, snap);
         boolean statusChanged = aim(statusFocus, !sheetOpen && zone == Z_STATUS ? statusIndex : -1, snap);
         boolean drawerChanged = aim(drawerFocus, !sheetOpen && zone == Z_DRAWER ? drawerIndex : -1, snap);
@@ -2142,6 +2178,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         statusDirty |= snap || statusChanged;
         heroDirty |= snap || heroChanged;
         drawerDirty |= snap || drawerChanged;
+
         spoken.focusMoved();
     }
 
@@ -2801,7 +2838,15 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             Recs.Pick p = currentPick();
             if (p == null) return;
             click.open();
-            DetailActivity.open(getContext(), p.kind, p.id);
+            if (KinoPub.KIND.equals(p.kind)) {
+                try {
+                    KinoPub.open(getContext(), p.id);
+                } catch (RuntimeException e) {
+                    showToast(Strings.get(R.string.kinowatch_couldnt_open_this_title));
+                }
+            } else {
+                DetailActivity.open(getContext(), p.kind, p.id);
+            }
             return;
         } else if (zone == Z_STATUS) {
             if (statusItems.isEmpty()) return;
@@ -2822,6 +2867,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             if (watchIndex >= watching.size()) return;
             WatchNext.Item w = watching.get(watchIndex);
             click.open();
+
             if (!WatchNext.open(activity, w)) {
                 showToast(Strings.get(R.string.couldnt_open_prefix) + (w.app == null || w.app.isEmpty() ? w.pkg : w.app) + ".");
             }
@@ -2830,7 +2876,15 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             Recs.Pick p = cardIndex < cards.size() ? cards.get(cardIndex) : null;
             if (p == null) return;
             click.open();
-            DetailActivity.open(getContext(), p.kind, p.id);
+            if (KinoPub.KIND.equals(p.kind)) {
+                try {
+                    KinoPub.open(getContext(), p.id);
+                } catch (RuntimeException e) {
+                    showToast(Strings.get(R.string.kinowatch_couldnt_open_this_title));
+                }
+            } else {
+                DetailActivity.open(getContext(), p.kind, p.id);
+            }
             return;
         } else {
             if (shelf.isEmpty()) return;
@@ -2919,6 +2973,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         android.graphics.Rect anchor = new android.graphics.Rect(Math.round(r.left) + at[0], Math.round(r.top) + at[1],
                 Math.round(r.right) + at[0], Math.round(r.bottom) + at[1]);
         click.open();
+
         TvUi.popover(activity, this, anchor, it.label, labels.toArray(new String[0]), which -> actions.get(which).run(), night < 0.5f);
     }
 
@@ -3044,6 +3099,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             wake();
             retarget(false);
             click.move();
+
             return;
         }
         int i = shelfIndex, j = i + dx;
@@ -3217,7 +3273,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         for (int i = 0; i < shelf.size(); i++) out.add(a11yId(Z_SHELF, i));
         for (int i = 0; i < drawerItems.size(); i++) out.add(a11yId(Z_DRAWER, i));
         if (drawerOpen && Prefs.weather()) out.add(a11yId(WIDGETS, 0));
-        if (drawerOpen && Prefs.quotes() && HomeData.active().length > 0) out.add(a11yId(WIDGETS, 1));
+        if (drawerOpen && HomeData.quotesVisible()) out.add(a11yId(WIDGETS, 1));
     }
 
     private String a11yText(int id) {
@@ -3239,7 +3295,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
                 return watching.get(i).title + (watchMetas != null && i < watchMetas.length && !watchMetas[i].isEmpty()
                         ? ", " + watchMetas[i] : "");
             case Z_SHELF:
-                if (reordering && !reorderTop && i == shelfIndex) {
+                if (reordering && i == shelfIndex) {
                     return Strings.get(R.string.moving_prefix) + label(shelf, i)
                             + Strings.get(R.string.position_prefix) + (i + 1) + Strings.get(R.string.of_suffix_prefix) + shelf.size();
                 }
@@ -3326,7 +3382,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         List<Integer> out = new ArrayList<>();
         if (!drawerOpen) return out;
         if (Prefs.weather()) out.add(0);
-        if (Prefs.quotes() && HomeData.active().length > 0) out.add(1);
+        if (HomeData.quotesVisible()) out.add(1);
         return out;
     }
 
@@ -3438,12 +3494,25 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
 
     /** The quotes card as TalkBack reads it: each coin with its price and 24 h change. */
     private String quotesText() {
-        StringBuilder s = new StringBuilder(Strings.get(R.string.crypto));
-        String stale = HomeData.staleness(data.pricesAt, 5 * 60_000L);
-        s.append(", ").append(stale.isEmpty() ? Strings.get(R.string.label_24h_change) : Strings.get(R.string.stale_quote_prefix) + stale).append('.');
+        List<String> pairs = Prefs.fxPairs();
+        StringBuilder s = new StringBuilder(Strings.get(pairs.isEmpty() ? R.string.crypto : R.string.my_quotes));
+        if (HomeData.active().length > 0) {
+            String stale = HomeData.staleness(data.pricesAt, 5 * 60_000L);
+            s.append(", ").append(stale.isEmpty() ? Strings.get(R.string.label_24h_change)
+                    : Strings.get(R.string.stale_quote_prefix) + stale).append('.');
+        }
         for (int i : HomeData.active()) {
             s.append(' ').append(HomeData.coinName(i)).append(' ').append(HomeData.brl(data.prices[i]));
             if (!Double.isNaN(data.changes[i])) s.append(", ").append(HomeData.change(data.changes[i]));
+            s.append('.');
+        }
+        for (String pair : pairs) {
+            HomeData.FxRate rate = data.fxRate(pair);
+            s.append(' ').append(pair);
+            if (rate != null) {
+                s.append(", ").append(rate.text()).append(", ").append(rate.date);
+                if (!Double.isNaN(rate.change)) s.append(", ").append(HomeData.change(rate.change));
+            }
             s.append('.');
         }
         return s.toString();
@@ -3512,8 +3581,17 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
     private void updateCards() {
         // Where we are in the tab: a new list (every hour, or details that drop a pick) keeps the tab and the page.
         int inTab = Math.max(0, page - tabFirst[tab]);
+        boolean kino = !watchMode && kinoSelected();
+        kinoConnected = kino && KinoPub.connected(getContext());
+        if (kinoConnected) recs.kino.refresh(tab);
+        appRecommendations = kino || Prefs.appRecommendations() && !watchMode && !Recs.forApp(recs.all(null), recommendationPackage).isEmpty();
         for (int t = 0; t < 3; t++) {
-            tabPicks[t] = watchMode ? new ArrayList<Recs.Pick>() : recs.all(TAB_KIND[t]);   // Continue Watching: no picks
+            if (kino) {
+                tabPicks[t] = kinoConnected ? recs.kino.picks(t) : java.util.Collections.emptyList();
+            } else {
+                List<Recs.Pick> available = watchMode ? java.util.Collections.emptyList() : recs.all(TAB_KIND[t]);
+                tabPicks[t] = appRecommendations ? Recs.forApp(available, recommendationPackage) : available;
+            }
             int pages = tabPicks[t].isEmpty() ? 0 : Math.max(1, tabPicks[t].size() / 3);
             tabFirst[t + 1] = tabFirst[t] + pages;
         }
@@ -3528,25 +3606,33 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
                 retarget(false);
             }
         }
-        // Recs keeps the 10 images used last: this page and the two it can turn to (9), or with the focus on the tabs,
-        // this page and the other tabs' first pages, so the next move never waits for a photo.
-        for (Recs.Pick p : cards) recs.backdrop(p);
+        // Visible cards lead the image queue; the neighbours warm in the background within its memory budget.
+        List<Recs.Pick> near = new ArrayList<>();
+        if (kino && !cards.isEmpty()) recs.kino.addSeasonCount(cards.get(0));
         if (pages > 0 && total > 1) {
-            List<Recs.Pick> near = new ArrayList<>();
             if (zone == Z_TOP) {
                 for (int t = 0; t < 3; t++) if (t != tab && tabFirst[t + 1] > tabFirst[t]) near.addAll(pageCards(tabFirst[t]));
             } else {
                 near.addAll(pageCards(Math.floorMod(page + 1, total)));
                 near.addAll(pageCards(Math.floorMod(page - 1, total)));
             }
-            for (Recs.Pick p : near) recs.backdrop(p);
-            near.addAll(cards);
-            recs.details(near);
         }
-        Backdrop b = cards.isEmpty() ? null : recs.backdrop(cards.get(Math.min(cardIndex, cards.size() - 1)));
-        if (cards.isEmpty() || b != null) showBackdrop(b);
+        recs.prepareImages(recommendationPackage, cards, near);
+        near.addAll(cards);
+        if (!kino) recs.details(near);
+        updateCardBackdrop();
         heroDirty = true;
         spoken.focusMoved();    // new picks under the focused card
+    }
+
+    private void updateCardBackdrop() {
+        if (cards.isEmpty()) {
+            showBackdrop(null);
+            return;
+        }
+        Recs.Pick pick = cards.get(Math.min(cardIndex, cards.size() - 1));
+        Backdrop backdrop = recs.backdrop(pick.backdrop == null ? cards.get(0) : pick);
+        if (backdrop != null) showBackdrop(backdrop);
     }
 
     /** The tab a page of the run belongs to. */
@@ -3627,7 +3713,8 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             if (HomeData.coinCount() > 0 || playingTab != null) drawQuotes(c);
             return;
         }
-        String hello = Strings.get(R.string.for_you);
+        String hello = appRecommendations && shelfIndex < shelf.size()
+                ? shelf.get(shelfIndex).label : Strings.get(R.string.for_you);
         float helloX = Ui.he ? CONTENT_R * k - lTitle.measureText(hello) : MARGIN * k - Ui.leftBearing(lTitle, hello);
         c.drawText(hello, helloX, L_TITLE_BASE * k, lTitle);
         // Text tabs (the selected one in bold, in the main text color); with focus on the tabs, the selected one gets
@@ -3654,6 +3741,14 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             if (i == tab) lTabOn.setColor(blend(tone(L_INK, WHITE), L_INK, focus));   // always dark on the white pill
             c.drawText(Strings.get(TABS[i]), r.centerX() - p.measureText(Strings.get(TABS[i])) / 2, r.centerY() + Ui.halfCap(p), p);
         }
+        if (kinoSelected() && cards.isEmpty()) {
+            int message = kinoConnected ? recs.kino.emptyMessage(tab) : R.string.connect_kinopub;
+            String text = Strings.get(message);
+            float x = Ui.he ? CONTENT_R * k - lCardMeta.measureText(text) : MARGIN * k;
+            c.drawText(text, x, (L_CARDS_TOP + 52) * k, lCardMeta);
+            if (HomeData.coinCount() > 0 || playingTab != null) drawQuotes(c);
+            return;
+        }
         int top = -1;
         for (int i = 0; i < 3; i++) if (cardFocus[i].value > 0.02f && (top < 0 || cardFocus[i].value > cardFocus[top].value)) top = i;
         for (int i = 0; i < 3; i++) if (i != top) drawLightCard(c, i);
@@ -3661,11 +3756,11 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         if (HomeData.coinCount() > 0 || playingTab != null) drawQuotes(c);
     }
 
-    private boolean picksOn() {
-        return !watchMode && Recs.hasKey(getContext());
-    }
+    private boolean kinoSelected() { return KinoPub.PLAYER_PACKAGE.equals(recommendationPackage); }
 
-    // MARK: - Continue Watching (Home Settings → Top of the screen)
+    private boolean picksOn() {
+        return !watchMode && (kinoSelected() || Recs.hasKey(getContext()));
+    }
 
     /** What reload read for Continue Watching (the choice, the permission, the list), on the main thread. */
     private void setWatching(boolean mode, boolean allowed, List<WatchNext.Item> list) {
@@ -3827,11 +3922,6 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         c.drawText(weatherLine, x + sw + 16 * k, base, lWeather);
     }
 
-    /**
-     * Recommendation card: the title's photo (already at the focused card size, so it stays sharp), rounded corners and
-     * a soft shadow; when focused, it grows 5%, rises and lights up its border. Below it, the title (and on the large
-     * card, genre · runtime · service).
-     */
     private void drawLightCard(Canvas c, int i) {
         RectF base = cardRects[i];
         Recs.Pick p = i < cards.size() ? cards.get(i) : null;
@@ -3886,6 +3976,23 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
             c.restore();
         }
         if (p == null) return;
+        if (i != 0 && KinoPub.KIND.equals(p.kind)) {
+            int width = Math.max(1, Math.round(bw));
+            StaticLayout title = kinoCardTitles[i];
+            if (title == null || title.getWidth() != width || !p.title.contentEquals(title.getText())) {
+                title = StaticLayout.Builder.obtain(p.title, 0, p.title.length(), new TextPaint(lCardTitle), width)
+                        .setMaxLines(2).setEllipsize(TextUtils.TruncateAt.END).setIncludePad(false)
+                        .setTextDirection(Ui.he ? android.text.TextDirectionHeuristics.RTL : android.text.TextDirectionHeuristics.LTR)
+                        .build();
+                kinoCardTitles[i] = title;
+            }
+            title.getPaint().setColor(lCardTitle.getColor());
+            c.save();
+            c.translate(base.left, base.bottom + 19 * k);
+            title.draw(c);
+            c.restore();
+            return;
+        }
         fitPaint.set(lCardTitle);
         String title = TextUtils.ellipsize(p.title, fitPaint, bw, TextUtils.TruncateAt.END).toString();
         c.drawText(title, Ui.he ? base.right - lCardTitle.measureText(title) : base.left, base.bottom + 46 * k, lCardTitle);
@@ -3896,10 +4003,29 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         }
     }
 
+    private void refreshConnections() {
+        Context context = getContext();
+        AudioManager audio = context.getSystemService(AudioManager.class);
+        boolean bluetooth = false;
+        if (audio != null) for (AudioDeviceInfo device : audio.getDevices(AudioManager.GET_DEVICES_OUTPUTS)) {
+            int type = device.getType();
+            if (type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP || type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO
+                    || type == AudioDeviceInfo.TYPE_BLE_HEADSET || type == AudioDeviceInfo.TYPE_BLE_SPEAKER
+                    || type == AudioDeviceInfo.TYPE_HEARING_AID) {
+                bluetooth = true;
+                break;
+            }
+        }
+        if (bluetoothAudio != bluetooth) {
+            bluetoothAudio = bluetooth;
+            statusDirty = true;
+            wake();
+        }
+    }
+
     /**
-     * Explore, HDMI Inputs, Settings (and the App Store once added), in the saved order: icon-only glass circles (light
-     * by day, smoked at night); the focused one turns white with a dark icon (the tvOS focus) and its name appears below
-     * it. Moving one, it is lifted and wiggles, drawn last so it passes over the neighbors sliding to their new places.
+     * Explore, HDMI Inputs and Settings: icon-only glass circles (light by day, smoked at night); the focused one turns
+     * white with a dark icon (the tvOS focus) and its name appears below it.
      */
     private void drawLightButtons(Canvas c) {
         applyTone();
@@ -3950,7 +4076,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
      * before them (just after them in Hebrew, mirrored), so the title, the tabs and the clock keep their places.
      */
     private void drawStatusIcons(Canvas c) {
-        if (!Prefs.statusIcons() || (network == 0 && !usbDrive)) return;
+        if (!Prefs.statusIcons() || (network == 0 && !usbDrive && !bluetoothAudio)) return;
         // The round buttons' edge on the title's side, however many of them show.
         float edge = Float.NaN;
         for (int i = TABS.length; i < TABS.length + lightButtons.size(); i++) {   // the buttons shown, not stale rects
@@ -3964,6 +4090,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
         float x = Ui.he ? edge + 2 * L_STATUS_GAP * k : edge - 2 * L_STATUS_GAP * k;
         // From the buttons outward: the drive next to them, the network beyond it (it reads "Wi-Fi, USB, buttons").
         if (usbDrive) x = drawStatusIcon(c, "usb", x, color);
+        if (bluetoothAudio) x = drawStatusIcon(c, "bluetooth", x, color);
         if (network != 0) drawStatusIcon(c, network == 2 ? "ethernet" : "wifi", x, color);
     }
 
